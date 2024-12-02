@@ -5,8 +5,9 @@ import { Plus, Search, FileText } from 'lucide-react';
 import { usePage } from '@/contexts/page-context';
 import { SimulacaoPDF } from '@/components/creditos/simulacao-pdf';
 import { Dialog } from '@headlessui/react';
+import { Simulacao } from '@/types/simulacao';
 
-const credits = [
+const credits: Simulacao[] = [
   {
     id: 1,
     client: 'João Silva',
@@ -36,9 +37,9 @@ const credits = [
 export default function CreditosPage() {
   const { setTitle } = usePage();
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
-  const [selectedSimulacao, setSelectedSimulacao] = useState(null);
+  const [selectedSimulacao, setSelectedSimulacao] = useState<Simulacao | null>(null);
 
-  const handleVisualizarPDF = (simulacao) => {
+  const handleVisualizarPDF = (simulacao: Simulacao) => {
     setSelectedSimulacao(simulacao);
     setIsPDFModalOpen(true);
   };
