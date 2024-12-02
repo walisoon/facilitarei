@@ -6,38 +6,32 @@ import { usePage } from '@/contexts/page-context';
 import { SimulacaoPDF } from '@/components/creditos/simulacao-pdf';
 import { Dialog } from '@headlessui/react';
 import { Simulacao } from '@/types/simulacao';
-
-const credits: Simulacao[] = [
-  {
-    id: 1,
-    client: 'João Silva',
-    value: 'R$ 5.000',
-    status: 'Aprovada',
-    date: '10/01/2024',
-    paymentDay: '05',
-  },
-  {
-    id: 2,
-    client: 'Maria Santos',
-    value: 'R$ 3.000',
-    status: 'Em Análise',
-    date: '09/01/2024',
-    paymentDay: '10',
-  },
-  {
-    id: 3,
-    client: 'Pedro Oliveira',
-    value: 'R$ 2.000',
-    status: 'Reprovada',
-    date: '08/01/2024',
-    paymentDay: '15',
-  },
-];
+import { SimulacoesAPI } from '@/lib/supabase';
+import toast from 'react-hot-toast';
 
 export default function CreditosPage() {
   const { setTitle } = usePage();
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
   const [selectedSimulacao, setSelectedSimulacao] = useState<Simulacao | null>(null);
+  const [simulacoes, setSimulacoes] = useState<Simulacao[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const carregarSimulacoes = async () => {
+    try {
+      setLoading(true);
+      const data = await SimulacoesAPI.listar();
+      setSimulacoes(data as Simulacao[]);
+    } catch (error) {
+      console.error('Erro ao carregar simulações:', error);
+      toast.error('Erro ao carregar simulações');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    carregarSimulacoes();
+  }, []);
 
   const handleVisualizarPDF = (simulacao: Simulacao) => {
     setSelectedSimulacao(simulacao);
@@ -99,33 +93,33 @@ export default function CreditosPage() {
             <tr>
               <th
                 scope="col"
-                className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-6"
+                className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-300 sm:pl-6"
               >
                 Cliente
               </th>
               <th
                 scope="col"
-                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-300"
               >
                 Valor
               </th>
               <th
                 scope="col"
-                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-300"
               >
                 Status
               </th>
               <th
                 scope="col"
-                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-300"
               >
                 Data
               </th>
               <th
                 scope="col"
-                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-300"
               >
-                Dia de Pagamento
+                Dia do Pagamento
               </th>
               <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
                 <span className="sr-only">Ações</span>
@@ -133,68 +127,77 @@ export default function CreditosPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {credits.map((credit) => (
-              <tr key={credit.id}>
-                <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:pl-6">
-                  {credit.client}
-                </td>
-                <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  {credit.value}
-                </td>
-                <td className="whitespace-nowrap px-3 py-4 text-sm">
-                  <span
-                    className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                      credit.status === 'Aprovada'
-                        ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-                        : credit.status === 'Em Análise'
-                        ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
-                        : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
-                    }`}
-                  >
-                    {credit.status}
-                  </span>
-                </td>
-                <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  {credit.date}
-                </td>
-                <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  Dia {credit.paymentDay}
-                </td>
-                <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                  <button
-                    onClick={() => handleVisualizarPDF(credit)}
-                    className="text-orange-600 dark:text-orange-500 hover:text-orange-900 dark:hover:text-orange-400 inline-flex items-center gap-1"
-                  >
-                    <FileText className="h-4 w-4" />
-                    Visualizar PDF
-                  </button>
+            {loading ? (
+              <tr>
+                <td colSpan={6} className="text-center py-4">
+                  Carregando...
                 </td>
               </tr>
-            ))}
+            ) : simulacoes.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center py-4">
+                  Nenhuma simulação encontrada
+                </td>
+              </tr>
+            ) : (
+              simulacoes.map((credit) => (
+                <tr key={credit.id}>
+                  <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-300 sm:pl-6">
+                    {credit.nome_cliente || credit.client}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {credit.valor_emprestimo ? `R$ ${credit.valor_emprestimo.toFixed(2)}` : credit.value}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm">
+                    <span
+                      className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                        credit.status === 'Aprovada'
+                          ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                          : credit.status === 'Em Análise'
+                          ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
+                          : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                      }`}
+                    >
+                      {credit.status}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {credit.data_criacao || credit.date}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {credit.paymentDay}
+                  </td>
+                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                    <button
+                      type="button"
+                      onClick={() => handleVisualizarPDF(credit)}
+                      className="text-orange-600 dark:text-orange-500 hover:text-orange-900 dark:hover:text-orange-400"
+                    >
+                      <FileText className="h-5 w-5" />
+                      <span className="sr-only">Visualizar PDF</span>
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
-      {/* Modal do PDF */}
+
+      {/* PDF Modal */}
       <Dialog
+        as="div"
+        className="relative z-10"
         open={isPDFModalOpen}
         onClose={() => setIsPDFModalOpen(false)}
-        className="relative z-50"
       >
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
-
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 p-6 text-left align-middle shadow-xl transition-all">
-            <div className="absolute top-0 right-0 pt-4 pr-4">
-              <button
-                type="button"
-                className="rounded-md bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-500 focus:outline-none"
-                onClick={() => setIsPDFModalOpen(false)}
-              >
-                <span className="sr-only">Fechar</span>
-              </button>
-            </div>
-            {selectedSimulacao && <SimulacaoPDF simulacao={selectedSimulacao} />}
-          </Dialog.Panel>
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl sm:p-6">
+              {selectedSimulacao && <SimulacaoPDF simulacao={selectedSimulacao} />}
+            </Dialog.Panel>
+          </div>
         </div>
       </Dialog>
     </div>

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { Simulacao } from '@/types/simulacao'
 
 // Use o domínio base do Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qkimxruewcensnfllvv.supabase.co'
@@ -29,23 +30,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     }
   }
 })
-
-// Tipos para as simulações
-export interface Simulacao {
-  id?: number
-  numero: string
-  nome_cliente: string
-  cpf: string
-  consultor: string
-  valor_emprestimo: number
-  taxa_entrada: number
-  numero_parcelas: number
-  valor_entrada: number
-  valor_parcela: number
-  status: 'Em Análise' | 'Aprovada' | 'Reprovada'
-  data_criacao?: string
-  data_atualizacao?: string
-}
 
 // Tipos para usuários
 export interface Usuario {
