@@ -29,6 +29,11 @@ const formatCurrency = (value?: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 };
 
+const formatarData = (data?: string) => {
+  if (!data) return '';
+  return new Date(data).toLocaleDateString('pt-BR');
+};
+
 export default function SimulacaoPage() {
   const { setTitle } = usePage();
   const [showModal, setShowModal] = useState(false);
@@ -104,12 +109,6 @@ export default function SimulacaoPage() {
   useEffect(() => {
     setTitle('Simulação de Crédito');
   }, [setTitle]);
-
-  // Função para formatar a data
-  const formatarData = (data: string | null) => {
-    if (!data) return '-';
-    return new Date(data).toLocaleDateString('pt-BR');
-  };
 
   return (
     <>
