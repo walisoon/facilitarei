@@ -24,6 +24,11 @@ const statusOptions: StatusOption[] = [
   { id: 'Reprovada', name: 'Reprovada', color: 'red' },
 ];
 
+const formatCurrency = (value?: number) => {
+  if (value === undefined) return 'R$ 0,00';
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+};
+
 export default function SimulacaoPage() {
   const { setTitle } = usePage();
   const [showModal, setShowModal] = useState(false);
@@ -222,7 +227,7 @@ export default function SimulacaoPage() {
                     {simulacao.nome_cliente}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(simulacao.valor_emprestimo)}
+                    {formatCurrency(simulacao.valor_emprestimo)}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
                     {simulacao.numero_parcelas}x
