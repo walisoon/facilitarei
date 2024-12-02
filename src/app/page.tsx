@@ -134,6 +134,16 @@ const alertasRecentes = [
   { tipo: 'Baixo', mensagem: 'Documentação incompleta', valor: 'R$ 2.000' },
 ];
 
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    value: number;
+    name: string;
+    color: string;
+  }>;
+  label?: string;
+}
+
 export default function DashboardPage() {
   const { setTitle } = usePage();
 
@@ -286,9 +296,9 @@ export default function DashboardPage() {
                       showGridLines={false}
                       stack={true}
                       yAxisWidth={80}
-                      customTooltip={({ payload }) => {
-                        if (!payload[0]) return null;
-                        const total = payload.reduce((sum, entry) => sum + entry.value, 0);
+                      customTooltip={({ active, payload, label }: TooltipProps) => {
+                        if (!active || !payload || !payload.length) return null;
+                        const total = payload.reduce((sum, entry) => sum + (entry?.value || 0), 0);
                         return (
                           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
                             <div className="text-gray-900 dark:text-white font-medium mb-2">
@@ -350,8 +360,8 @@ export default function DashboardPage() {
                     layout="vertical"
                     showLegend={false}
                     showGridLines={false}
-                    customTooltip={({ payload }) => {
-                      if (!payload[0]) return null;
+                    customTooltip={({ payload, label }: TooltipProps) => {
+                      if (!payload || !payload.length) return null;
                       return (
                         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
                           <div className="text-gray-900 dark:text-white font-medium mb-2">
