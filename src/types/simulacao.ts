@@ -16,4 +16,9 @@ export interface Simulacao {
   telefone?: string;
   email?: string;
   created_at?: string;
+  valor_emprestimo?: number;
+  taxa_entrada?: number;
+  numero_parcelas?: number;
+  valor_entrada?: number;
+  valor_parcela?: number;
 }
