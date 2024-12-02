@@ -10,6 +10,7 @@ import { Menu, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import { SimulacoesAPI } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import { Simulacao } from '@/types/simulacao';
 
 const statusOptions = [
   { id: 'Aprovada', name: 'Aprovada', color: 'green' },
@@ -21,17 +22,17 @@ export default function SimulacaoPage() {
   const { setTitle } = usePage();
   const [showModal, setShowModal] = useState(false);
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
-  const [selectedSimulacao, setSelectedSimulacao] = useState(null);
-  const [simulacoes, setSimulacoes] = useState([]);
+  const [selectedSimulacao, setSelectedSimulacao] = useState<Simulacao | null>(null);
+  const [simulacoes, setSimulacoes] = useState<Simulacao[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [simulacaoToDelete, setSimulacaoToDelete] = useState(null);
+  const [simulacaoToDelete, setSimulacaoToDelete] = useState<Simulacao | null>(null);
   const [loading, setLoading] = useState(true);
 
   const carregarSimulacoes = async () => {
     try {
       setLoading(true);
       const data = await SimulacoesAPI.listar();
-      setSimulacoes(data);
+      setSimulacoes(data as Simulacao[]);
     } catch (error) {
       console.error('Erro ao carregar simulações:', error);
       toast.error('Erro ao carregar simulações');
@@ -55,7 +56,7 @@ export default function SimulacaoPage() {
     }
   };
 
-  const handleDelete = (simulacao) => {
+  const handleDelete = (simulacao: Simulacao) => {
     setSimulacaoToDelete(simulacao);
     setShowDeleteModal(true);
   };
@@ -75,7 +76,7 @@ export default function SimulacaoPage() {
     }
   };
 
-  const handleVisualizarPDF = (simulacao) => {
+  const handleVisualizarPDF = (simulacao: Simulacao) => {
     // Garantir que os valores numéricos estão formatados corretamente
     const simulacaoFormatada = {
       ...simulacao,
