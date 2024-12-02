@@ -1,8 +1,10 @@
+export type SimulacaoStatus = 'Aprovada' | 'Em Análise' | 'Reprovada';
+
 export interface Simulacao {
   id: number;
   client: string;
   value: string;
-  status: string;
+  status: SimulacaoStatus;
   date: string;
   paymentDay: string;
   nome?: string;

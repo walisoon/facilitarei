@@ -10,9 +10,15 @@ import { Menu, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import { SimulacoesAPI } from '@/lib/supabase';
 import toast from 'react-hot-toast';
-import { Simulacao } from '@/types/simulacao';
+import { Simulacao, SimulacaoStatus } from '@/types/simulacao';
 
-const statusOptions = [
+interface StatusOption {
+  id: SimulacaoStatus;
+  name: string;
+  color: string;
+}
+
+const statusOptions: StatusOption[] = [
   { id: 'Aprovada', name: 'Aprovada', color: 'green' },
   { id: 'Em Análise', name: 'Em Análise', color: 'yellow' },
   { id: 'Reprovada', name: 'Reprovada', color: 'red' },
@@ -45,7 +51,7 @@ export default function SimulacaoPage() {
     carregarSimulacoes();
   }, []);
 
-  const handleStatusChange = async (simulacaoId: number, newStatus: string) => {
+  const handleStatusChange = async (simulacaoId: number, newStatus: SimulacaoStatus) => {
     try {
       await SimulacoesAPI.atualizarStatus(simulacaoId, newStatus);
       await carregarSimulacoes(); // Recarrega a lista
@@ -257,7 +263,7 @@ export default function SimulacaoPage() {
                                 <Menu.Item key={option.id}>
                                   {({ active }) => (
                                     <button
-                                      onClick={() => handleStatusChange(simulacao.id, option.name)}
+                                      onClick={() => handleStatusChange(simulacao.id, option.id)}
                                       className={`${
                                         active
                                           ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
