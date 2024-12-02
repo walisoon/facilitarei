@@ -137,12 +137,12 @@ const alertasRecentes = [
 interface CustomTooltipProps {
   active?: boolean;
   payload?: Array<{
-    value: string | number;
+    value: string | number | Array<string | number> | undefined;
     name: string;
-    fill?: string;
+    color?: string;
     dataKey?: string;
   }>;
-  label?: string;
+  label?: string | number;
 }
 
 export default function DashboardPage() {
