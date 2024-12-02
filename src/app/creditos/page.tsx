@@ -12,7 +12,7 @@ const credits: Simulacao[] = [
     id: 1,
     client: 'João Silva',
     value: 'R$ 5.000',
-    status: 'Aprovado',
+    status: 'Aprovada',
     date: '10/01/2024',
     paymentDay: '05',
   },
@@ -28,7 +28,7 @@ const credits: Simulacao[] = [
     id: 3,
     client: 'Pedro Oliveira',
     value: 'R$ 2.000',
-    status: 'Negado',
+    status: 'Reprovada',
     date: '08/01/2024',
     paymentDay: '15',
   },
@@ -144,7 +144,7 @@ export default function CreditosPage() {
                 <td className="whitespace-nowrap px-3 py-4 text-sm">
                   <span
                     className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                      credit.status === 'Aprovado'
+                      credit.status === 'Aprovada'
                         ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
                         : credit.status === 'Em Análise'
                         ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
