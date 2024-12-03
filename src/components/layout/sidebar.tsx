@@ -54,9 +54,7 @@ export function Sidebar() {
       className={cn(
         "fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-300",
         "bg-white border-r border-gray-200 dark:bg-black dark:border-gray-800",
-        "lg:translate-x-0",
-        isOpen ? "translate-x-0 w-64" : "-translate-x-full lg:w-20",
-        "shadow-lg lg:shadow-none"
+        isOpen ? "w-64" : "w-20"
       )}
     >
       <div className="flex flex-1 flex-col gap-y-5 overflow-y-auto px-2">
@@ -96,12 +94,6 @@ export function Sidebar() {
                       <div>
                         <Link
                           href={item.href}
-                          onClick={(e) => {
-                            if (item.subItems) {
-                              e.preventDefault();
-                              handleItemClick(item.name);
-                            }
-                          }}
                           className={cn(
                             "w-full group flex items-center gap-x-3 rounded-md p-2 text-sm leading-6",
                             isOpen ? "justify-start" : "justify-center",

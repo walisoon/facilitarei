@@ -15,26 +15,18 @@ function RootLayoutContent({
 }: {
   children: React.ReactNode
 }) {
-  const { isOpen, toggle } = useSidebar();
+  const { isOpen } = useSidebar();
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      {/* Overlay para fechar o menu no mobile */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-gray-900/50 lg:hidden"
-          onClick={toggle}
-          aria-hidden="true"
-        />
-      )}
       <Sidebar />
       <div className={cn(
-        "transition-all duration-300 w-full",
+        "transition-all duration-300",
         isOpen ? "lg:pl-64" : "lg:pl-20"
       )}>
         <Navbar />
-        <main className="py-4 sm:py-6 lg:py-10">
-          <div className="mx-auto max-w-7xl px-2 sm:px-4 md:px-6 lg:px-8">
+        <main className="py-10">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {children}
           </div>
         </main>
