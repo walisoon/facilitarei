@@ -103,15 +103,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   simulationsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
     gap: 15,
-    justifyContent: 'space-between',
     marginBottom: 15,
   },
   simulationCard: {
-    flex: 1,
-    minWidth: '48%',
+    width: '100%',
     padding: '10 15',
     backgroundColor: '#fff7ed',
     borderRadius: 4,
@@ -291,13 +288,13 @@ export function SimulacaoPDF({ simulacoes, simulacao, dadosCliente }: SimulacaoP
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>
-              facilitacredsinop.com.br | Telefone: (66) 99207-3183
+                www.facilitacredsinop.com.br | Telefone: (66) 99207-3183
               </Text>
               <Text style={styles.footerText}>
                 Endereço: Rua das Pitangueiras, 274, setor industria, cep 78550-274, Sinop, MT
               </Text>
               <Text style={styles.footerText}>
-                Todos os direitos reservados 2024 Facilita Cred
+                Todos os direitos reservados 2024 Facilita Cred/51.445.643/0001-80
               </Text>
             </View>
           </View>
