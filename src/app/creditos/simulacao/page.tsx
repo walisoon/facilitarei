@@ -141,6 +141,7 @@ export default function SimulacaoPage() {
         <NovaSimulacaoModal
           isOpen={showModal}
           onClose={() => setShowModal(false)}
+          onSuccess={carregarSimulacoes}
         />
 
         {/* Search */}
