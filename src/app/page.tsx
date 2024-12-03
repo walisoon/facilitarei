@@ -302,7 +302,7 @@ export default function DashboardPage() {
                                   style={{ backgroundColor: entry.color }}
                                 />
                                 <span className="text-gray-600 dark:text-gray-300">
-                                  {entry.name}: R$ {(entry.value / 1000).toFixed(1)}k
+                                  {entry.name}: R$ {(Number(entry.value) / 1000).toFixed(1)}k
                                 </span>
                               </div>
                             ))}
