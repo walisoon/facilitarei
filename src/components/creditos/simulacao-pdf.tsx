@@ -23,10 +23,16 @@ const styles = StyleSheet.create({
     height: '100vh',
     backgroundColor: '#1e293b', // slate-800
     border: 'none',
+    '@media max-width: 640px': {
+      height: 'calc(100vh - 56px)',
+    },
   },
   page: {
     // fontFamily: 'Roboto',
     padding: '20 30',
+    '@media max-width: 640px': {
+      padding: '15 20',
+    },
     backgroundColor: '#ffffff',
     position: 'relative',
   },
@@ -43,6 +49,10 @@ const styles = StyleSheet.create({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    '@media max-width: 640px': {
+      width: '100%',
+      left: '25%',
+    },
   },
   logo: {
     width: 120,

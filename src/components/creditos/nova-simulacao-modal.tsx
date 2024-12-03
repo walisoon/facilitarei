@@ -282,35 +282,28 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
         <Dialog as="div" className="relative z-50" onClose={onClose}>
           <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
           <div className="fixed inset-0 flex items-center justify-center p-4">
-            <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-lg bg-gradient-to-b from-white/70 to-white/50 dark:from-gray-900/70 dark:to-gray-900/50 text-left shadow-xl transition-all backdrop-blur-sm">
-              <div className="flex h-full flex-col">
-                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                  <div className="flex justify-between items-center">
-                    <Dialog.Title className="text-lg font-medium text-gray-900 dark:text-white">
-                      Nova Simulação
-                    </Dialog.Title>
-                    <button
-                      onClick={onClose}
-                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="flex-1 overflow-y-auto p-4">
-                  <form 
-                    id="simulacaoForm"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      console.log("Formulário submetido");
-                      handleSubmit();
-                    }} 
-                    className="space-y-4"
-                  >
-                    <div className="grid grid-cols-2 gap-6">
+            <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 w-full sm:max-w-2xl sm:p-6">
+              <div className="absolute right-0 top-0 pr-4 pt-4 sm:block">
+                <button
+                  type="button"
+                  className="rounded-md bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                  onClick={onClose}
+                >
+                  <span className="sr-only">Fechar</span>
+                  <X className="h-6 w-6" aria-hidden="true" />
+                </button>
+              </div>
+
+              <div className="sm:flex sm:items-start w-full">
+                <div className="w-full">
+                  <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900 dark:text-white mb-4">
+                    Nova Simulação
+                  </Dialog.Title>
+
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="nomeCliente" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                        <label htmlFor="nomeCliente" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                           Nome do Cliente
                         </label>
                         <input
@@ -325,7 +318,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                       </div>
 
                       <div>
-                        <label htmlFor="cpf" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                        <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                           CPF
                         </label>
                         <input
@@ -340,7 +333,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                       </div>
 
                       <div>
-                        <label htmlFor="consultor" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                        <label htmlFor="consultor" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                           Consultor
                         </label>
                         <input
@@ -355,7 +348,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                       </div>
 
                       <div>
-                        <label htmlFor="valorSelecionado" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                        <label htmlFor="valorSelecionado" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                           Valor do Crédito
                         </label>
                         <select
@@ -490,14 +483,14 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                         </div>
                       </div>
                     )}
-                  </form>
+                  </div>
                 </div>
 
                 <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
                   >
                     Cancelar
                   </button>
