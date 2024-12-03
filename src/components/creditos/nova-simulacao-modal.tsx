@@ -256,169 +256,271 @@ export function NovaSimulacaoModal({ isOpen, onClose }: NovaSimulacaoModalProps)
           onClose={onClose}
         >
           {/* Backdrop com blur */}
-          <div className="fixed inset-0 bg-gradient-to-br from-white/10 via-black/20 to-black/30 backdrop-blur-[2px]" aria-hidden="true" />
+          <Transition.Child
+            as="div"
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-gradient-to-br from-white/10 via-black/20 to-black/30 backdrop-blur-[2px]" aria-hidden="true" />
+          </Transition.Child>
 
           {/* Full-screen container */}
           <div className="fixed inset-0 flex items-center justify-center p-4">
-            <Dialog.Panel className="relative w-full max-w-2xl transform overflow-hidden rounded-lg bg-gradient-to-b from-white/70 to-white/50 dark:from-gray-900/70 dark:to-gray-900/50 text-left shadow-xl transition-all backdrop-blur-sm">
-              <div className="absolute top-0 right-0 pt-4 pr-4">
-                <button
-                  type="button"
-                  className="rounded-md text-gray-400 hover:text-gray-500 focus:outline-none"
-                  onClick={onClose}
-                >
-                  <X className="h-6 w-6" aria-hidden="true" />
-                </button>
-              </div>
-              <div className="h-[80vh] flex flex-col">
-                <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
-                  <Dialog.Title className="text-lg font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
-                    Nova Simulação
-                  </Dialog.Title>
-                  <form onSubmit={handleSubmit} className="space-y-6 p-6">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <label htmlFor="nomeCliente" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
-                          Nome do Cliente
-                        </label>
-                        <input
-                          type="text"
-                          name="nomeCliente"
-                          id="nomeCliente"
-                          required
-                          value={formData.nomeCliente}
-                          onChange={handleChange}
-                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
-                        />
-                      </div>
-
-                      <div>
-                        <label htmlFor="cpf" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
-                          CPF
-                        </label>
-                        <input
-                          type="text"
-                          name="cpf"
-                          id="cpf"
-                          required
-                          value={formData.cpf}
-                          onChange={handleChange}
-                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
-                        />
-                      </div>
-
-                      <div>
-                        <label htmlFor="consultor" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
-                          Consultor
-                        </label>
-                        <input
-                          type="text"
-                          name="consultor"
-                          id="consultor"
-                          required
-                          value={formData.consultor}
-                          onChange={handleChange}
-                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
-                        />
-                      </div>
-
-                      <div>
-                        <label htmlFor="valorEmprestimo" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
-                          Valor do Empréstimo
-                        </label>
-                        <div className="relative mt-1">
-                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 dark:text-gray-400">
-                            R$
-                          </span>
+            <Transition.Child
+              as="div"
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel className="relative w-full max-w-2xl transform overflow-hidden rounded-lg bg-gradient-to-b from-white/70 to-white/50 dark:from-gray-900/70 dark:to-gray-900/50 text-left shadow-xl transition-all backdrop-blur-sm">
+                <div className="absolute top-0 right-0 pt-4 pr-4">
+                  <button
+                    type="button"
+                    className="rounded-md text-gray-400 hover:text-gray-500 focus:outline-none"
+                    onClick={onClose}
+                  >
+                    <X className="h-6 w-6" aria-hidden="true" />
+                  </button>
+                </div>
+                <div className="h-[80vh] flex flex-col">
+                  <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                    <Dialog.Title className="text-lg font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                      Nova Simulação
+                    </Dialog.Title>
+                    <form onSubmit={handleSubmit} className="space-y-6 p-6">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <label htmlFor="nomeCliente" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                            Nome do Cliente
+                          </label>
                           <input
                             type="text"
-                            name="valorEmprestimo"
-                            id="valorEmprestimo"
+                            name="nomeCliente"
+                            id="nomeCliente"
                             required
-                            value={formData.valorEmprestimo}
+                            value={formData.nomeCliente}
                             onChange={handleChange}
-                            placeholder="0,00"
-                            className="pl-8 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                            className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="cpf" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                            CPF
+                          </label>
+                          <input
+                            type="text"
+                            name="cpf"
+                            id="cpf"
+                            required
+                            value={formData.cpf}
+                            onChange={handleChange}
+                            className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="consultor" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                            Consultor
+                          </label>
+                          <input
+                            type="text"
+                            name="consultor"
+                            id="consultor"
+                            required
+                            value={formData.consultor}
+                            onChange={handleChange}
+                            className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="valorEmprestimo" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                            Valor do Empréstimo
+                          </label>
+                          <div className="relative mt-1">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 dark:text-gray-400">
+                              R$
+                            </span>
+                            <input
+                              type="text"
+                              name="valorEmprestimo"
+                              id="valorEmprestimo"
+                              required
+                              value={formData.valorEmprestimo}
+                              onChange={handleChange}
+                              placeholder="0,00"
+                              className="pl-8 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label htmlFor="taxaEntrada" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                            Taxa de Entrada (%)
+                          </label>
+                          <input
+                            type="number"
+                            name="taxaEntrada"
+                            id="taxaEntrada"
+                            required
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value={formData.taxaEntrada}
+                            onChange={handleChange}
+                            className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="numeroParcelas" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                            Número de Parcelas
+                          </label>
+                          <input
+                            type="number"
+                            name="numeroParcelas"
+                            id="numeroParcelas"
+                            required
+                            min="1"
+                            max="800"
+                            value={formData.numeroParcelas}
+                            onChange={handleChange}
+                            className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
                           />
                         </div>
                       </div>
-
-                      <div>
-                        <label htmlFor="taxaEntrada" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
-                          Taxa de Entrada (%)
-                        </label>
-                        <input
-                          type="number"
-                          name="taxaEntrada"
-                          id="taxaEntrada"
-                          required
-                          min="0"
-                          max="100"
-                          step="0.1"
-                          value={formData.taxaEntrada}
-                          onChange={handleChange}
-                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
-                        />
-                      </div>
-
-                      <div>
-                        <label htmlFor="numeroParcelas" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
-                          Número de Parcelas
-                        </label>
-                        <input
-                          type="number"
-                          name="numeroParcelas"
-                          id="numeroParcelas"
-                          required
-                          min="1"
-                          max="800"
-                          value={formData.numeroParcelas}
-                          onChange={handleChange}
-                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
-                        />
-                      </div>
-                    </div>
-                    {formData.valorEmprestimo && formData.taxaEntrada && formData.numeroParcelas && (
-                      <div className="rounded-lg bg-gradient-to-br from-white/40 to-white/20 dark:from-gray-800/40 dark:to-gray-800/20 p-6 backdrop-blur-sm shadow-xl">
-                        <h3 className="text-lg font-semibold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent mb-4">
-                          Resultado da Simulação
-                        </h3>
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="space-y-3">
-                              <div>
-                                <span className="text-sm text-gray-600 dark:text-gray-300">Valor do Empréstimo</span>
-                                <p className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
-                                  R$ {formData.valorEmprestimo}
-                                </p>
+                      {formData.valorEmprestimo && formData.taxaEntrada && formData.numeroParcelas && (
+                        <div className="rounded-lg bg-gradient-to-br from-white/40 to-white/20 dark:from-gray-800/40 dark:to-gray-800/20 p-6 backdrop-blur-sm shadow-xl">
+                          <h3 className="text-lg font-semibold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent mb-4">
+                            Resultado da Simulação
+                          </h3>
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="space-y-3">
+                                <div>
+                                  <span className="text-sm text-gray-600 dark:text-gray-300">Valor do Empréstimo</span>
+                                  <p className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                                    R$ {formData.valorEmprestimo}
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-sm text-gray-600 dark:text-gray-300">Taxa de Juros</span>
+                                  <p className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                                    {formData.taxaEntrada}%
+                                  </p>
+                                </div>
                               </div>
-                              <div>
-                                <span className="text-sm text-gray-600 dark:text-gray-300">Taxa de Juros</span>
-                                <p className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
-                                  {formData.taxaEntrada}%
-                                </p>
+                              <div className="space-y-3">
+                                <div>
+                                  <span className="text-sm text-gray-600 dark:text-gray-300">Entrada</span>
+                                  <p className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                                    R$ {calcularEntrada()}
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-sm text-gray-600 dark:text-gray-300">Parcelas</span>
+                                  <p className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                                    {formData.numeroParcelas}x de R$ {calcularValorParcelas()}
+                                  </p>
+                                </div>
                               </div>
                             </div>
-                            <div className="space-y-3">
-                              <div>
-                                <span className="text-sm text-gray-600 dark:text-gray-300">Entrada</span>
-                                <p className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
-                                  R$ {calcularEntrada()}
-                                </p>
-                              </div>
-                              <div>
-                                <span className="text-sm text-gray-600 dark:text-gray-300">Parcelas</span>
-                                <p className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
-                                  {formData.numeroParcelas}x de R$ {calcularValorParcelas()}
-                                </p>
-                              </div>
+                            <div className="flex justify-center gap-2">
+                              <button
+                                type="button"
+                                className="flex items-center justify-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                onClick={handleVisualizarPDF}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="24"
+                                  height="24"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="h-4 w-4"
+                                >
+                                  <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+                                  <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+                                  <path d="M10 9H8" />
+                                  <path d="M16 13H8" />
+                                  <path d="M16 17H8" />
+                                </svg>
+                                Gerar PDF
+                              </button>
+                              <button
+                                type="button"
+                                className="flex items-center justify-center gap-1 px-3 py-1.5 bg-orange-600 text-white text-sm rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                onClick={adicionarSimulacao}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="24"
+                                  height="24"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="h-4 w-4"
+                                >
+                                  <path d="M5 12h14" />
+                                  <path d="M12 5v14" />
+                                </svg>
+                                Adicionar à Lista
+                              </button>
                             </div>
                           </div>
-                          <div className="flex justify-center gap-2">
+                        </div>
+                      )}
+
+                      {simulacoes.length > 0 && (
+                        <div className="mt-4">
+                          <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Simulações Adicionadas:</h3>
+                          <div className="space-y-2 mb-4">
+                            {simulacoes.map((simulacao, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-3 rounded-lg"
+                              >
+                                <div>
+                                  <p className="font-medium text-gray-900 dark:text-white">Simulação {index + 1}</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                                    Valor: R$ {simulacao.valor_emprestimo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  </p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                                    Parcelas: {simulacao.numero_parcelas}x de R$ {simulacao.valor_parcela.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={() => removerSimulacao(index)}
+                                  className="text-red-600 hover:text-red-800 dark:text-red-500 dark:hover:text-red-400"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex justify-center">
                             <button
                               type="button"
                               className="flex items-center justify-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              onClick={handleVisualizarPDF}
+                              onClick={() => {
+                                setSelectedSimulacao(simulacoes);
+                                setIsPDFModalOpen(true);
+                              }}
                             >
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -440,117 +542,14 @@ export function NovaSimulacaoModal({ isOpen, onClose }: NovaSimulacaoModalProps)
                               </svg>
                               Gerar PDF
                             </button>
-                            <button
-                              type="button"
-                              className="flex items-center justify-center gap-1 px-3 py-1.5 bg-orange-600 text-white text-sm rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                              onClick={adicionarSimulacao}
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="h-4 w-4"
-                              >
-                                <path d="M5 12h14" />
-                                <path d="M12 5v14" />
-                              </svg>
-                              Adicionar à Lista
-                            </button>
                           </div>
                         </div>
-                      </div>
-                    )}
-
-                    {simulacoes.length > 0 && (
-                      <div className="mt-4">
-                        <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Simulações Adicionadas:</h3>
-                        <div className="space-y-2 mb-4">
-                          {simulacoes.map((simulacao, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-3 rounded-lg"
-                            >
-                              <div>
-                                <p className="font-medium text-gray-900 dark:text-white">Simulação {index + 1}</p>
-                                <p className="text-sm text-gray-600 dark:text-gray-300">
-                                  Valor: R$ {simulacao.valor_emprestimo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                </p>
-                                <p className="text-sm text-gray-600 dark:text-gray-300">
-                                  Parcelas: {simulacao.numero_parcelas}x de R$ {simulacao.valor_parcela.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                </p>
-                              </div>
-                              <button
-                                onClick={() => removerSimulacao(index)}
-                                className="text-red-600 hover:text-red-800 dark:text-red-500 dark:hover:text-red-400"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="flex justify-center">
-                          <button
-                            type="button"
-                            className="flex items-center justify-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            onClick={() => {
-                              setSelectedSimulacao(simulacoes);
-                              setIsPDFModalOpen(true);
-                            }}
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="h-4 w-4"
-                            >
-                              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-                              <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-                              <path d="M10 9H8" />
-                              <path d="M16 13H8" />
-                              <path d="M16 17H8" />
-                            </svg>
-                            Gerar PDF
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </form>
+                      )}
+                    </form>
+                  </div>
                 </div>
-              </div>
-              <div className="bg-gray-100/50 dark:bg-gray-800/50 px-6 py-4 backdrop-blur-sm">
-                <div className="mt-4 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="px-3 py-1.5 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                  >
-                    Cancelar
-                  </button>
-                  {simulacoes.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={salvarTodasSimulacoes}
-                      disabled={loading}
-                      className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
-                    >
-                      {loading ? 'Salvando...' : 'Salvar Todas'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </Dialog.Panel>
+              </Dialog.Panel>
+            </Transition.Child>
           </div>
         </Dialog>
 
