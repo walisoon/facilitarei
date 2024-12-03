@@ -29,7 +29,8 @@ import {
   Flex,
   ProgressBar,
   Grid,
-  Col
+  Col,
+  CustomTooltipProps
 } from '@tremor/react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
@@ -133,17 +134,6 @@ const alertasRecentes = [
   { tipo: 'Médio', mensagem: 'Análise de crédito pendente há 5 dias', valor: 'R$ 3.000' },
   { tipo: 'Baixo', mensagem: 'Documentação incompleta', valor: 'R$ 2.000' },
 ];
-
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: Array<{
-    value: string | number | Array<string | number> | undefined;
-    name: string;
-    color?: string;
-    dataKey?: string;
-  }>;
-  label?: string | number;
-}
 
 export default function DashboardPage() {
   const { setTitle } = usePage();
