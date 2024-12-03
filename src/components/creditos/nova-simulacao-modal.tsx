@@ -89,7 +89,9 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
         valor_entrada: dadosCredito.entrada,
         valor_parcela: dadosCredito.parcela,
         numero_parcelas: 240, // Alterado para exibir 240 parcelas
-        taxa_entrada: Number(((dadosCredito.entrada / dadosCredito.credito) * 100).toFixed(2)),
+        taxa_entrada: valorSelecionado?.credito && valorSelecionado?.entrada 
+          ? Number(((valorSelecionado.entrada / valorSelecionado.credito) * 100).toFixed(2))
+          : 0,
         status: 'Em Análise' as const
       };
 
@@ -149,7 +151,9 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
       cpf: formData.cpf,
       consultor: formData.consultor,
       valor_emprestimo: dadosCredito.credito,
-      taxa_entrada: Number(((dadosCredito.entrada / dadosCredito.credito) * 100).toFixed(2)),
+      taxa_entrada: valorSelecionado?.credito && valorSelecionado?.entrada 
+        ? Number(((valorSelecionado.entrada / valorSelecionado.credito) * 100).toFixed(2))
+        : 0,
       numero_parcelas: 240, // Alterado para exibir 240 parcelas
       valor_entrada: dadosCredito.entrada,
       valor_parcela: dadosCredito.parcela,
@@ -248,16 +252,20 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
   };
 
   const handleVisualizarPDF = () => {
+    if (!valorSelecionado?.credito || !valorSelecionado?.entrada || !valorSelecionado?.parcela) {
+      return;
+    }
+
     const simulacaoAtual = {
       numero: gerarNumeroSimulacao(),
       nome_cliente: formData.nomeCliente,
       cpf: formData.cpf,
       consultor: formData.consultor,
-      valor_emprestimo: valorSelecionado?.credito,
-      taxa_entrada: Number(((valorSelecionado?.entrada / valorSelecionado?.credito) * 100).toFixed(2)),
-      numero_parcelas: 240, // Alterado para exibir 240 parcelas
-      valor_entrada: valorSelecionado?.entrada,
-      valor_parcela: valorSelecionado?.parcela,
+      valor_emprestimo: valorSelecionado.credito,
+      taxa_entrada: Number(((valorSelecionado.entrada / valorSelecionado.credito) * 100).toFixed(2)),
+      numero_parcelas: 240,
+      valor_entrada: valorSelecionado.entrada,
+      valor_parcela: valorSelecionado.parcela,
       status: 'Em Análise' as const
     };
 
@@ -272,10 +280,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
     <>
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={onClose}>
-          <div className="fixed inset-0">
-            <div className="fixed inset-0 bg-gradient-to-br from-white/10 via-black/20 to-black/30 backdrop-blur-[2px]" aria-hidden="true" />
-          </div>
-
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
           <div className="fixed inset-0 flex items-center justify-center p-4">
             <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-lg bg-gradient-to-b from-white/70 to-white/50 dark:from-gray-900/70 dark:to-gray-900/50 text-left shadow-xl transition-all backdrop-blur-sm">
               <div className="flex h-full flex-col">
@@ -399,7 +404,9 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                               <div>
                                 <span className="text-sm text-gray-600 dark:text-gray-300">Taxa de Entrada</span>
                                 <p className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
-                                  {Number(((valorSelecionado?.entrada / valorSelecionado?.credito) * 100).toFixed(2))}%
+                                  {valorSelecionado?.credito && valorSelecionado?.entrada 
+                                    ? Number(((valorSelecionado.entrada / valorSelecionado.credito) * 100).toFixed(2))
+                                    : 0}%
                                 </p>
                               </div>
                             </div>
@@ -513,11 +520,25 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
         </Dialog>
       </Transition>
 
+      {/* Modal do PDF */}
       <Transition appear show={isPDFModalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-[60]" onClose={() => setIsPDFModalOpen(false)}>
-          <div className="fixed inset-0" onClick={(e) => e.stopPropagation()}>
-            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
-          </div>
+        <Dialog 
+          as="div" 
+          className="relative z-[999]" 
+          onClose={() => setIsPDFModalOpen(false)}
+          static
+        >
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+          </Transition.Child>
 
           <div className="fixed inset-0 flex items-center justify-center p-4">
             <Dialog.Panel className="w-full max-w-4xl h-[90vh] bg-gradient-to-b from-gray-900/70 to-gray-900/50 backdrop-blur-sm rounded-lg shadow-xl">
@@ -528,7 +549,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                   </Dialog.Title>
                   <button
                     onClick={() => setIsPDFModalOpen(false)}
-                    className="text-gray-400 hover:text-white transition-colors"
+                    className="text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -543,7 +564,9 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                     valor_entrada: valorSelecionado.entrada,
                     valor_parcela: valorSelecionado.parcela,
                     numero_parcelas: 240,
-                    taxa_entrada: Number(((valorSelecionado.entrada / valorSelecionado.credito) * 100).toFixed(2)),
+                    taxa_entrada: valorSelecionado?.credito && valorSelecionado?.entrada 
+                      ? Number(((valorSelecionado.entrada / valorSelecionado.credito) * 100).toFixed(2))
+                      : 0,
                     status: 'Em Análise' as const
                   }] : []}
                   dadosCliente={{
