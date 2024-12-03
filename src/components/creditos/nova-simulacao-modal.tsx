@@ -26,7 +26,18 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
   const [loading, setLoading] = useState(false);
   const [simulacoes, setSimulacoes] = useState<any[]>([]);
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
-  const [selectedSimulacao, setSelectedSimulacao] = useState(null);
+  const [selectedSimulacao, setSelectedSimulacao] = useState<{
+    numero: string;
+    nome_cliente: string;
+    cpf: string;
+    consultor: string;
+    valor_emprestimo: number;
+    taxa_entrada: number;
+    numero_parcelas: number;
+    valor_entrada: number;
+    valor_parcela: number;
+    status: "Em Análise";
+  } | null>(null);
 
   const formatarMoeda = (valor: string) => {
     valor = valor.replace(/\D/g, '');
