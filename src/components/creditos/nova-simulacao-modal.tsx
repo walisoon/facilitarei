@@ -511,8 +511,11 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                             type="button"
                             className="flex items-center justify-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             onClick={() => {
-                              setSelectedSimulacao(simulacoes);
-                              setIsPDFModalOpen(true);
+                              // Seleciona apenas a primeira simulação do array
+                              if (simulacoes.length > 0) {
+                                setSelectedSimulacao(simulacoes[0]);
+                                setIsPDFModalOpen(true);
+                              }
                             }}
                           >
                             <svg
