@@ -23,10 +23,7 @@ const navigation = [
   { 
     name: 'Créditos', 
     href: '/creditos', 
-    icon: CreditCard,
-    subItems: [
-      { name: 'Simulação', href: '/creditos/simulacao' }
-    ]
+    icon: CreditCard
   },
   { name: 'Clientes', href: '/clientes', icon: Users },
   { name: 'Consultores', href: '/consultores', icon: UserPlus },
