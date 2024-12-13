@@ -77,7 +77,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
         taxa_entrada: 0,
         valor_parcela: 0,
         status: 'Em Análise' as const,
-        data_nascimento: formData.data_nascimento || null,
+        data_nascimento: formData.data_nascimento ? new Date(formData.data_nascimento) : undefined,
         telefone: formData.telefone1 || '',
         email: formData.email || '',
         tipo_bem: Object.entries(formData.tipoBem)
