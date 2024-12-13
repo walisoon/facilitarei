@@ -322,7 +322,11 @@ export default function SimulacaoPage() {
                                   <Menu.Item key={option.id}>
                                     {({ active }) => (
                                       <button
-                                        onClick={() => handleStatusChange(simulacao.id, option.id)}
+                                        onClick={() => {
+                                          if (simulacao.id) {
+                                            handleStatusChange(simulacao.id, option.id);
+                                          }
+                                        }}
                                         className={`${
                                           active
                                             ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
