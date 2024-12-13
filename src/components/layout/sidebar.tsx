@@ -17,8 +17,16 @@ import {
 import { useSidebar } from '@/contexts/sidebar-context';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { LucideIcon } from 'lucide-react';
 
-const navigation = [
+interface NavigationItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  subItems?: NavigationItem[];
+}
+
+const navigation: NavigationItem[] = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Simulação', href: '/creditos/simulacao', icon: CircleDollarSign },
   { name: 'Créditos', href: '/creditos', icon: CreditCard },
