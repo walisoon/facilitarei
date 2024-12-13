@@ -144,7 +144,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
         taxa_entrada: Number(((dadosCredito.entrada / dadosCredito.credito) * 100).toFixed(2)),
         valor_parcela: Number(dadosCredito.parcela),
         status: 'Em Análise',
-        data_nascimento: formData.dataNascimento ? new Date(formData.dataNascimento) : null,
+        data_nascimento: formData.dataNascimento ? new Date(formData.dataNascimento) : undefined,
         telefone: formData.telefone?.trim(),
         email: formData.email?.trim(),
         tipo_bem: formData.tipoBem?.trim()
