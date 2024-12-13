@@ -8,7 +8,7 @@ import { Dialog } from '@headlessui/react';
 import { Simulacao } from '@/types/simulacao';
 import { SimulacoesAPI } from '@/lib/supabase';
 import toast from 'react-hot-toast';
-import { NovoCredito } from '@/components/NovoCredito';
+import { NovoCredito } from '@/components/creditos/NovoCredito';
 
 export default function CreditosPage() {
   const { setTitle } = usePage();
