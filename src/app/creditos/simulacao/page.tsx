@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Plus, Search, FileText, MoreVertical, Check, Trash2, X } from 'lucide-react';
 import { usePage } from '@/contexts/page-context';
 import { NovaSimulacaoModal } from '@/components/creditos/nova-simulacao-modal';
@@ -43,12 +43,37 @@ export default function SimulacaoPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [simulacaoToDelete, setSimulacaoToDelete] = useState<Simulacao | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const filteredSimulacoes = useMemo(() => {
+    return simulacoes.filter(simulacao =>
+      simulacao.nome_cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      simulacao.cpf.includes(searchTerm) ||
+      simulacao.numero?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [simulacoes, searchTerm]);
+
+  const paginatedSimulacoes = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredSimulacoes.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredSimulacoes, currentPage]);
+
+  const totalPages = Math.ceil(filteredSimulacoes.length / itemsPerPage);
 
   const carregarSimulacoes = async () => {
     try {
       setLoading(true);
-      const data = await SimulacoesAPI.listar();
-      setSimulacoes(data as Simulacao[]);
+      const { data, error } = await SimulacoesAPI.listar();
+      
+      if (error) {
+        toast.error('Erro ao carregar simulações');
+        console.error('Erro:', error);
+        return;
+      }
+      
+      setSimulacoes(data || []);
     } catch (error) {
       console.error('Erro ao carregar simulações:', error);
       toast.error('Erro ao carregar simulações');
@@ -78,12 +103,23 @@ export default function SimulacaoPage() {
   };
 
   const confirmDelete = async () => {
-    if (simulacaoToDelete) {
+    if (simulacaoToDelete?.id) {
       try {
-        await SimulacoesAPI.excluir(simulacaoToDelete.id);
-        await carregarSimulacoes(); // Recarrega a lista
+        const { error } = await SimulacoesAPI.excluir(simulacaoToDelete.id);
+        if (error) {
+          console.error('Erro ao excluir simulação:', error);
+          toast.error('Erro ao excluir simulação');
+          return;
+        }
+        
+        // Atualiza a lista local removendo a simulação excluída
+        setSimulacoes(prev => prev.filter(s => s.id !== simulacaoToDelete.id));
+        
+        // Reseta o estado do modal
         setShowDeleteModal(false);
         setSimulacaoToDelete(null);
+        
+        // Notifica o usuário
         toast.success('Simulação excluída com sucesso!');
       } catch (error) {
         console.error('Erro ao excluir simulação:', error);
@@ -157,8 +193,10 @@ export default function SimulacaoPage() {
               <input
                 id="search"
                 name="search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="block w-full rounded-md border-0 bg-white dark:bg-gray-900 py-1.5 pl-10 pr-3 text-gray-900 dark:text-gray-300 ring-1 ring-inset ring-gray-300 dark:ring-gray-700 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-orange-600 dark:focus:ring-orange-500 sm:text-sm sm:leading-6"
-                placeholder="Buscar simulações..."
+                placeholder="Buscar por nome, CPF ou número..."
                 type="search"
               />
             </div>
@@ -218,109 +256,177 @@ export default function SimulacaoPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {simulacoes.map((simulacao) => (
-                <tr key={simulacao.id}>
-                  <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:pl-6">
-                    {simulacao.numero}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {simulacao.nome_cliente}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {formatCurrency(simulacao.valor_emprestimo)}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {simulacao.numero_parcelas}x
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {simulacao.taxa_entrada}%
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                          simulacao.status === 'Aprovada'
-                            ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-                            : simulacao.status === 'Em Análise'
-                            ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
-                            : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
-                        }`}
-                      >
-                        {simulacao.status}
-                      </span>
-                      <Menu as="div" className="relative inline-block text-left">
-                        <Menu.Button className="flex items-center text-gray-400 hover:text-gray-600">
-                          <span className="sr-only">Mudar status</span>
-                          <MoreVertical className="h-4 w-4" />
-                        </Menu.Button>
-                        <Transition
-                          as={Fragment}
-                          enter="transition ease-out duration-100"
-                          enterFrom="transform opacity-0 scale-95"
-                          enterTo="transform opacity-100 scale-100"
-                          leave="transition ease-in duration-75"
-                          leaveFrom="transform opacity-100 scale-100"
-                          leaveTo="transform opacity-0 scale-95"
-                        >
-                          <Menu.Items className="absolute right-0 z-10 mt-2 w-40 origin-top-right rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                            <div className="py-1">
-                              {statusOptions.map((option) => (
-                                <Menu.Item key={option.id}>
-                                  {({ active }) => (
-                                    <button
-                                      onClick={() => handleStatusChange(simulacao.id, option.id)}
-                                      className={`${
-                                        active
-                                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                                          : 'text-gray-700 dark:text-gray-200'
-                                      } group flex items-center w-full px-4 py-2 text-sm`}
-                                    >
-                                      {simulacao.status === option.name && (
-                                        <Check className="mr-2 h-4 w-4 text-orange-500" />
-                                      )}
-                                      <span className={simulacao.status === option.name ? 'font-medium' : ''}>
-                                        {option.name}
-                                      </span>
-                                    </button>
-                                  )}
-                                </Menu.Item>
-                              ))}
-                            </div>
-                          </Menu.Items>
-                        </Transition>
-                      </Menu>
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="py-4 text-center">
+                    <div className="flex justify-center items-center space-x-2">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500"></div>
+                      <span>Carregando simulações...</span>
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {formatarData(simulacao.data_criacao)}
-                  </td>
-                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-4">
-                    <button
-                      onClick={() => handleDelete(simulacao)}
-                      className="text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-400"
-                      title="Excluir simulação"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleVisualizarPDF(simulacao)}
-                      className="text-orange-600 dark:text-orange-500 hover:text-orange-900 dark:hover:text-orange-400 inline-flex items-center gap-1"
-                    >
-                      <FileText className="h-4 w-4" />
-                      PDF
-                    </button>
-                    <a
-                      href="#"
-                      className="text-orange-600 dark:text-orange-500 hover:text-orange-900 dark:hover:text-orange-400"
-                    >
-                      Detalhes
-                    </a>
+                </tr>
+              ) : paginatedSimulacoes.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-4 text-center text-gray-500">
+                    Nenhuma simulação encontrada
                   </td>
                 </tr>
-              ))}
+              ) : (
+                paginatedSimulacoes.map((simulacao) => (
+                  <tr key={simulacao.id}>
+                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-white sm:pl-6">
+                      {simulacao.numero || simulacao.id}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      {simulacao.nome_cliente}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      {formatCurrency(simulacao.valor_emprestimo)}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      {simulacao.numero_parcelas}x
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      {simulacao.taxa_entrada}%
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                            simulacao.status === 'Aprovada'
+                              ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                              : simulacao.status === 'Em Análise'
+                              ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
+                              : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                          }`}
+                        >
+                          {simulacao.status}
+                        </span>
+                        <Menu as="div" className="relative inline-block text-left">
+                          <Menu.Button className="flex items-center text-gray-400 hover:text-gray-600">
+                            <span className="sr-only">Mudar status</span>
+                            <MoreVertical className="h-4 w-4" />
+                          </Menu.Button>
+                          <Transition
+                            as={Fragment}
+                            enter="transition ease-out duration-100"
+                            enterFrom="transform opacity-0 scale-95"
+                            enterTo="transform opacity-100 scale-100"
+                            leave="transition ease-in duration-75"
+                            leaveFrom="transform opacity-100 scale-100"
+                            leaveTo="transform opacity-0 scale-95"
+                          >
+                            <Menu.Items className="absolute right-0 z-10 mt-2 w-40 origin-top-right rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                              <div className="py-1">
+                                {statusOptions.map((option) => (
+                                  <Menu.Item key={option.id}>
+                                    {({ active }) => (
+                                      <button
+                                        onClick={() => handleStatusChange(simulacao.id, option.id)}
+                                        className={`${
+                                          active
+                                            ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                                            : 'text-gray-700 dark:text-gray-200'
+                                        } group flex items-center w-full px-4 py-2 text-sm`}
+                                      >
+                                        {simulacao.status === option.name && (
+                                          <Check className="mr-2 h-4 w-4 text-orange-500" />
+                                        )}
+                                        <span className={simulacao.status === option.name ? 'font-medium' : ''}>
+                                          {option.name}
+                                        </span>
+                                      </button>
+                                    )}
+                                  </Menu.Item>
+                                ))}
+                              </div>
+                            </Menu.Items>
+                          </Transition>
+                        </Menu>
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      {formatarData(simulacao.created_at)}
+                    </td>
+                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-4">
+                      <button
+                        onClick={() => handleVisualizarPDF(simulacao)}
+                        className="text-orange-600 dark:text-orange-500 hover:text-orange-900 dark:hover:text-orange-400 inline-flex items-center gap-1"
+                      >
+                        <FileText className="h-4 w-4" />
+                        PDF
+                      </button>
+                      <button
+                        onClick={() => handleDelete(simulacao)}
+                        className="text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-400 inline-flex items-center gap-1"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Excluir
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {filteredSimulacoes.length > 0 && (
+          <div className="flex items-center justify-between border-t border-gray-200 bg-white dark:bg-gray-800 px-4 py-3 sm:px-6">
+            <div className="flex flex-1 justify-between sm:hidden">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="relative inline-flex items-center rounded-md border border-gray-300 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
+              >
+                Anterior
+              </button>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
+              >
+                Próxima
+              </button>
+            </div>
+            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  Mostrando <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> até{' '}
+                  <span className="font-medium">
+                    {Math.min(currentPage * itemsPerPage, filteredSimulacoes.length)}
+                  </span>{' '}
+                  de <span className="font-medium">{filteredSimulacoes.length}</span> resultados
+                </p>
+              </div>
+              <div>
+                <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                  >
+                    <span className="sr-only">Anterior</span>
+                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                  >
+                    <span className="sr-only">Próxima</span>
+                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal de Confirmação de Exclusão */}
@@ -332,31 +438,32 @@ export default function SimulacaoPage() {
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-            <Dialog.Title className="text-lg font-medium text-gray-900 dark:text-white">
+          <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 p-6 text-left shadow-xl transition-all">
+            <Dialog.Title className="text-lg font-medium leading-6 text-gray-900 dark:text-white mb-4">
               Confirmar Exclusão
             </Dialog.Title>
             <div className="mt-2">
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Tem certeza que deseja excluir a simulação{' '}
-                {simulacaoToDelete?.numero}? Esta ação não pode ser desfeita.
+                {simulacaoToDelete?.numero || simulacaoToDelete?.id}?
+                Esta ação não poderá ser desfeita.
               </p>
             </div>
 
-            <div className="mt-4 flex justify-end gap-3">
-              <button
-                type="button"
-                className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
-                onClick={confirmDelete}
-              >
-                Excluir
-              </button>
+            <div className="mt-6 flex justify-end space-x-4">
               <button
                 type="button"
                 className="inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
                 onClick={() => setShowDeleteModal(false)}
               >
                 Cancelar
+              </button>
+              <button
+                type="button"
+                className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                onClick={confirmDelete}
+              >
+                Excluir
               </button>
             </div>
           </Dialog.Panel>

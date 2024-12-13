@@ -2,8 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 import { Simulacao } from '@/types/simulacao'
 
 // Use o domínio base do Supabase
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qkimxruewcensnfllvv.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFraW14cnVld2NlbnNibmZsbHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwOTIxMzksImV4cCI6MjA0ODY2ODEzOX0.tLnz1o3ximSJFMHb1kRzbfmF-4gIP_i-YD6n5TH24fE'
+const supabaseUrl = 'https://qkimxruewcensbnfllvv.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFraW14cnVld2NlbnNibmZsbHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwOTIxMzksImV4cCI6MjA0ODY2ODEzOX0.tLnz1o3ximSJFMHb1kRzbfmF-4gIP_i-YD6n5TH24fE'
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase URL and Anon Key must be provided')
@@ -12,22 +12,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Configuração do cliente Supabase com retry e timeout
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    persistSession: true,
     autoRefreshToken: true,
+    persistSession: true,
     detectSessionInUrl: true
-  },
-  db: {
-    schema: 'public'
-  },
-  global: {
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  },
-  realtime: {
-    params: {
-      eventsPerSecond: 10
-    }
   }
 })
 
@@ -44,33 +31,63 @@ export interface Usuario {
 // Funções helpers para interagir com o Supabase
 export const SimulacoesAPI = {
   // Criar nova simulação
-  async criar(simulacao: Omit<Simulacao, 'id' | 'data_criacao' | 'data_atualizacao'>) {
+  async criar(simulacao: Omit<Simulacao, 'id' | 'created_at' | 'updated_at'>) {
     try {
-      // Garante que os valores numéricos estão no formato correto
+      // Gera um número único para a simulação (ano + mês + sequencial)
+      const dataAtual = new Date();
+      const ano = dataAtual.getFullYear();
+      const mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+      
+      // Busca o último número do mês atual
+      const { data: ultimasSimulacoes } = await supabase
+        .from('simulacoes')
+        .select('numero')
+        .like('numero', `SIM${ano}${mes}%`)
+        .order('numero', { ascending: false });
+
+      // Gera o próximo número sequencial
+      let sequencial = '001';
+      if (ultimasSimulacoes && ultimasSimulacoes.length > 0) {
+        const ultimoNumero = ultimasSimulacoes[0].numero;
+        if (ultimoNumero) {
+          const ultimoSequencial = parseInt(ultimoNumero.slice(-3));
+          sequencial = String(ultimoSequencial + 1).padStart(3, '0');
+        }
+      }
+      
+      const numeroSimulacao = `SIM${ano}${mes}${sequencial}`;
+
+      // Garante que os valores numéricos sejam números
       const dadosFormatados = {
         ...simulacao,
+        numero: numeroSimulacao,
         valor_emprestimo: Number(simulacao.valor_emprestimo),
-        taxa_entrada: Number(simulacao.taxa_entrada),
-        numero_parcelas: Number(simulacao.numero_parcelas),
         valor_entrada: Number(simulacao.valor_entrada),
-        valor_parcela: Number(simulacao.valor_parcela)
+        numero_parcelas: Number(simulacao.numero_parcelas),
+        taxa_entrada: Number(simulacao.taxa_entrada),
+        valor_parcela: Number(simulacao.valor_parcela),
       };
+
+      console.log('Dados formatados para envio:', dadosFormatados);
+      console.log('Tipos dos campos numéricos:', {
+        valor_emprestimo: typeof dadosFormatados.valor_emprestimo,
+        valor_entrada: typeof dadosFormatados.valor_entrada,
+        numero_parcelas: typeof dadosFormatados.numero_parcelas,
+        taxa_entrada: typeof dadosFormatados.taxa_entrada,
+        valor_parcela: typeof dadosFormatados.valor_parcela,
+      });
 
       const { data, error } = await supabase
         .from('simulacoes')
         .insert([dadosFormatados])
         .select()
-        .single()
+        .single();
 
-      if (error) {
-        console.error('Erro do Supabase:', error)
-        throw new Error(`Erro ao criar simulação: ${error.message}`)
-      }
-
-      return data
+      if (error) throw error;
+      return { data, error: null };
     } catch (error) {
-      console.error('Erro ao criar simulação:', error)
-      throw error
+      console.error('Erro ao criar simulação:', error);
+      return { data: null, error };
     }
   },
 
@@ -80,26 +97,24 @@ export const SimulacoesAPI = {
       const { data, error } = await supabase
         .from('simulacoes')
         .select('*')
-        .order('data_criacao', { ascending: false })
+        .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Erro do Supabase:', error)
-        throw new Error(`Erro ao listar simulações: ${error.message}`)
-      }
+      if (error) throw error;
 
-      // Garantir que os valores numéricos estão formatados corretamente
-      return data?.map(simulacao => ({
+      // Converte os valores para número mantendo null se não existir
+      const simulacoesFormatadas = data?.map(simulacao => ({
         ...simulacao,
-        valor_emprestimo: Number(simulacao.valor_emprestimo),
-        taxa_entrada: Number(simulacao.taxa_entrada),
-        numero_parcelas: Number(simulacao.numero_parcelas),
-        valor_entrada: Number(simulacao.valor_entrada),
-        valor_parcela: Number(simulacao.valor_parcela),
-        data_criacao: simulacao.data_criacao || null
-      })) || []
+        valor_emprestimo: simulacao.valor_emprestimo ? Number(simulacao.valor_emprestimo) : null,
+        valor_entrada: simulacao.valor_entrada ? Number(simulacao.valor_entrada) : null,
+        numero_parcelas: simulacao.numero_parcelas ? Number(simulacao.numero_parcelas) : null,
+        taxa_entrada: simulacao.taxa_entrada ? Number(simulacao.taxa_entrada) : null,
+        valor_parcela: simulacao.valor_parcela ? Number(simulacao.valor_parcela) : null,
+      }));
+
+      return { data: simulacoesFormatadas || [], error: null };
     } catch (error) {
-      console.error('Erro ao listar simulações:', error)
-      throw error
+      console.error('Erro ao listar simulações:', error);
+      return { data: [], error };
     }
   },
 
@@ -115,9 +130,10 @@ export const SimulacoesAPI = {
         console.error('Erro ao atualizar status:', error)
         throw new Error(`Erro ao atualizar status: ${error.message}`)
       }
+      return { data: null, error: null };
     } catch (error) {
       console.error('Erro ao atualizar status:', error)
-      throw error
+      return { data: null, error };
     }
   },
 
@@ -127,15 +143,13 @@ export const SimulacoesAPI = {
       const { error } = await supabase
         .from('simulacoes')
         .delete()
-        .eq('id', id)
+        .eq('id', id);
 
-      if (error) {
-        console.error('Erro ao excluir simulação:', error)
-        throw new Error(`Erro ao excluir simulação: ${error.message}`)
-      }
+      if (error) throw error;
+      return { data: null, error: null };
     } catch (error) {
-      console.error('Erro ao excluir simulação:', error)
-      throw error
+      console.error('Erro ao excluir simulação:', error);
+      return { data: null, error };
     }
   }
 }
@@ -143,64 +157,80 @@ export const SimulacoesAPI = {
 export const UsuariosAPI = {
   // Criar novo usuário
   async criar(usuario: Omit<Usuario, 'id' | 'data_criacao' | 'ativo'>) {
-    const { data, error } = await supabase
-      .from('usuarios')
-      .insert([usuario])
-      .select()
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .insert([usuario])
+        .select()
+        .single()
 
-    if (error) {
+      if (error) {
+        console.error('Erro ao criar usuário:', error)
+        throw new Error(`Erro ao criar usuário: ${error.message}`)
+      }
+      return { data, error: null };
+    } catch (error) {
       console.error('Erro ao criar usuário:', error)
-      throw new Error(`Erro ao criar usuário: ${error.message}`)
+      return { data: null, error };
     }
-
-    return data
   },
 
   // Listar todos os usuários
   async listar() {
-    const { data, error } = await supabase
-      .from('usuarios')
-      .select('*')
-      .order('nome', { ascending: true })
+    try {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .order('nome', { ascending: true })
 
-    if (error) {
+      if (error) {
+        console.error('Erro ao listar usuários:', error)
+        throw new Error(`Erro ao listar usuários: ${error.message}`)
+      }
+      return { data, error: null };
+    } catch (error) {
       console.error('Erro ao listar usuários:', error)
-      throw new Error(`Erro ao listar usuários: ${error.message}`)
+      return { data: null, error };
     }
-
-    return data
   },
 
   // Atualizar usuário
   async atualizar(id: number, usuario: Partial<Usuario>) {
-    const { data, error } = await supabase
-      .from('usuarios')
-      .update(usuario)
-      .eq('id', id)
-      .select()
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .update(usuario)
+        .eq('id', id)
+        .select()
+        .single()
 
-    if (error) {
+      if (error) {
+        console.error('Erro ao atualizar usuário:', error)
+        throw new Error(`Erro ao atualizar usuário: ${error.message}`)
+      }
+      return { data, error: null };
+    } catch (error) {
       console.error('Erro ao atualizar usuário:', error)
-      throw new Error(`Erro ao atualizar usuário: ${error.message}`)
+      return { data: null, error };
     }
-
-    return data
   },
 
   // Excluir usuário (na verdade apenas desativa)
   async excluir(id: number) {
-    const { error } = await supabase
-      .from('usuarios')
-      .update({ ativo: false })
-      .eq('id', id)
+    try {
+      const { error } = await supabase
+        .from('usuarios')
+        .update({ ativo: false })
+        .eq('id', id)
 
-    if (error) {
+      if (error) {
+        console.error('Erro ao excluir usuário:', error)
+        throw new Error(`Erro ao excluir usuário: ${error.message}`)
+      }
+      return { data: null, error: null };
+    } catch (error) {
       console.error('Erro ao excluir usuário:', error)
-      throw new Error(`Erro ao excluir usuário: ${error.message}`)
+      return { data: null, error };
     }
-
-    return true
   }
 }

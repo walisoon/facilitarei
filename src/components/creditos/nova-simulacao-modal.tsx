@@ -20,9 +20,17 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
     cpf: '',
     consultor: '',
     valorSelecionado: 0,
+    dataNascimento: '',
+    telefone: '',
+    email: '',
+    tipoBem: ''
   });
 
+  const [selectedValue, setSelectedValue] = useState<number>(0);
+  const valorSelecionado = tabelaCredito.find(item => item.credito === selectedValue);
+
   const [loading, setLoading] = useState(false);
+  const [savingSimulacao, setSavingSimulacao] = useState(false);
   const [simulacoes, setSimulacoes] = useState<any[]>([]);
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
   const [selectedSimulacao, setSelectedSimulacao] = useState<{
@@ -38,15 +46,57 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
     status: "Em Análise";
   } | null>(null);
 
-  const valorSelecionado = tabelaCredito.find(item => item.credito === formData.valorSelecionado);
+  const validarCPF = (cpf: string) => {
+    // Remove caracteres não numéricos
+    cpf = cpf.replace(/[^\d]/g, '');
+
+    // Verifica se tem 11 dígitos
+    if (cpf.length !== 11) return false;
+
+    // Verifica se todos os dígitos são iguais
+    if (/^(\d)\1+$/.test(cpf)) return false;
+
+    // Validação do primeiro dígito verificador
+    let soma = 0;
+    for (let i = 0; i < 9; i++) {
+      soma += parseInt(cpf.charAt(i)) * (10 - i);
+    }
+    let resto = (soma * 10) % 11;
+    if (resto === 10 || resto === 11) resto = 0;
+    if (resto !== parseInt(cpf.charAt(9))) return false;
+
+    // Validação do segundo dígito verificador
+    soma = 0;
+    for (let i = 0; i < 10; i++) {
+      soma += parseInt(cpf.charAt(i)) * (11 - i);
+    }
+    resto = (soma * 10) % 11;
+    if (resto === 10 || resto === 11) resto = 0;
+    if (resto !== parseInt(cpf.charAt(10))) return false;
+
+    return true;
+  };
+
+  const formatarCPF = (cpf: string) => {
+    cpf = cpf.replace(/\D/g, '');
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
     if (name === 'valorSelecionado') {
+      const numeroValue = Number(value);
+      setSelectedValue(numeroValue);
       setFormData(prev => ({
         ...prev,
-        [name]: Number(value)
+        valorSelecionado: numeroValue
+      }));
+    } else if (name === 'cpf') {
+      const formattedCPF = formatarCPF(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: formattedCPF
       }));
     } else {
       setFormData(prev => ({
@@ -57,71 +107,91 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
   };
 
   const handleSubmit = async () => {
-    setLoading(true);
-    
     try {
-      if (!formData.nomeCliente?.trim()) {
-        toast.error('Por favor, preencha o nome do cliente');
-        setLoading(false);
-        return;
-      }
-
-      if (!formData.valorSelecionado) {
-        toast.error('Por favor, selecione um valor de crédito');
-        setLoading(false);
-        return;
-      }
-
-      const dadosCredito = tabelaCredito.find(item => item.credito === formData.valorSelecionado);
+      console.log('Selected Value:', selectedValue);
+      console.log('Form Data antes do submit:', formData);
+      const dadosCredito = tabelaCredito.find(item => item.credito === selectedValue);
       
       if (!dadosCredito) {
-        toast.error('Valor de crédito inválido');
-        setLoading(false);
+        toast.error('Por favor, selecione um valor de crédito válido');
+        setSavingSimulacao(false);
+        return;
+      }
+
+      setSavingSimulacao(true);
+      
+      // Validações
+      if (!formData.nomeCliente || !formData.cpf || !formData.consultor) {
+        toast.error('Por favor, preencha os campos obrigatórios: Nome, CPF e Consultor');
+        setSavingSimulacao(false);
+        return;
+      }
+
+      // Validação específica do CPF
+      if (!validarCPF(formData.cpf)) {
+        toast.error('CPF inválido. Por favor, verifique.');
+        setSavingSimulacao(false);
         return;
       }
 
       const novaSimulacao = {
-        numero: await gerarNumeroSimulacao(),
         nome_cliente: formData.nomeCliente.trim(),
-        cpf: formData.cpf,
-        consultor: formData.consultor,
-        valor_emprestimo: dadosCredito.credito,
-        valor_entrada: dadosCredito.entrada,
-        valor_parcela: dadosCredito.parcela,
-        numero_parcelas: 240, // Alterado para exibir 240 parcelas
-        taxa_entrada: valorSelecionado?.credito && valorSelecionado?.entrada 
-          ? Number(((valorSelecionado.entrada / valorSelecionado.credito) * 100).toFixed(2))
-          : 0,
-        status: 'Em Análise' as const
+        cpf: formData.cpf.replace(/\D/g, ''),
+        consultor: formData.consultor.trim(),
+        valor_emprestimo: Number(dadosCredito.credito),
+        valor_entrada: Number(dadosCredito.entrada),
+        numero_parcelas: 240, // Fixo em 240 parcelas
+        taxa_entrada: Number(((dadosCredito.entrada / dadosCredito.credito) * 100).toFixed(2)),
+        valor_parcela: Number(dadosCredito.parcela),
+        status: 'Em Análise',
+        data_nascimento: formData.dataNascimento ? new Date(formData.dataNascimento) : null,
+        telefone: formData.telefone?.trim(),
+        email: formData.email?.trim(),
+        tipo_bem: formData.tipoBem?.trim()
       };
 
-      // Adiciona à lista local de simulações
-      setSimulacoes(prev => [...prev, novaSimulacao]);
-
-      // Salva no Supabase
-      const resultado = await SimulacoesAPI.criar(novaSimulacao);
+      console.log('Dados formatados para envio:', novaSimulacao);
+      console.log('Tipos dos campos numéricos:', {
+        valor_emprestimo: typeof novaSimulacao.valor_emprestimo,
+        valor_entrada: typeof novaSimulacao.valor_entrada,
+        numero_parcelas: typeof novaSimulacao.numero_parcelas,
+        taxa_entrada: typeof novaSimulacao.taxa_entrada,
+        valor_parcela: typeof novaSimulacao.valor_parcela
+      });
       
-      if (resultado) {
-        toast.success('Simulação salva com sucesso!');
-        
-        setFormData({
-          nomeCliente: '',
-          cpf: '',
-          consultor: '',
-          valorSelecionado: 0,
-        });
-        
-        if (onSuccess) {
-          onSuccess();
-        }
-        
-        onClose();
+      // Salva no Supabase
+      const { data, error } = await SimulacoesAPI.criar(novaSimulacao);
+      
+      if (error) {
+        console.error('Erro detalhado:', error);
+        toast.error(`Erro ao salvar: ${error.message}`);
+        setSavingSimulacao(false);
+        return;
       }
+
+      console.log('Simulação salva com sucesso:', data);
+      
+      // Limpa o formulário
+      setFormData({
+        nomeCliente: '',
+        cpf: '',
+        consultor: '',
+        valorSelecionado: 0,
+        dataNascimento: '',
+        telefone: '',
+        email: '',
+        tipoBem: ''
+      });
+      
+      // Fecha o modal e notifica sucesso
+      toast.success('Simulação criada com sucesso!');
+      onSuccess?.();
+      onClose();
     } catch (error) {
       console.error('Erro ao salvar simulação:', error);
-      toast.error('Erro ao salvar simulação. Tente novamente.');
+      toast.error('Erro ao salvar simulação');
     } finally {
-      setLoading(false);
+      setSavingSimulacao(false);
     }
   };
 
@@ -138,7 +208,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
       return;
     }
 
-    const dadosCredito = tabelaCredito.find(item => item.credito === formData.valorSelecionado);
+    const dadosCredito = tabelaCredito.find(item => item.credito === selectedValue);
     
     if (!dadosCredito) {
       toast.error('Valor de crédito inválido');
@@ -223,6 +293,10 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
           cpf: '',
           consultor: '',
           valorSelecionado: 0,
+          dataNascimento: '',
+          telefone: '',
+          email: '',
+          tipoBem: ''
         });
         
         onClose();
@@ -349,6 +423,62 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                           id="consultor"
                           required
                           value={formData.consultor}
+                          onChange={handleChange}
+                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="dataNascimento" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                          Data de Nascimento
+                        </label>
+                        <input
+                          type="date"
+                          name="dataNascimento"
+                          id="dataNascimento"
+                          value={formData.dataNascimento}
+                          onChange={handleChange}
+                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="telefone" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                          Telefone
+                        </label>
+                        <input
+                          type="text"
+                          name="telefone"
+                          id="telefone"
+                          value={formData.telefone}
+                          onChange={handleChange}
+                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="email" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                          E-mail
+                        </label>
+                        <input
+                          type="email"
+                          name="email"
+                          id="email"
+                          value={formData.email}
+                          onChange={handleChange}
+                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="tipoBem" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+                          Tipo de Bem
+                        </label>
+                        <input
+                          type="text"
+                          name="tipoBem"
+                          id="tipoBem"
+                          value={formData.tipoBem}
                           onChange={handleChange}
                           className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
                         />
@@ -497,7 +627,8 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+                    disabled={savingSimulacao}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
                   >
                     Cancelar
                   </button>
@@ -508,10 +639,17 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                       console.log("Botão salvar clicado");
                       handleSubmit();
                     }}
-                    disabled={loading}
-                    className="px-4 py-2 text-sm font-medium text-white bg-orange-500 border border-transparent rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={savingSimulacao}
+                    className="inline-flex w-full justify-center items-center rounded-md bg-orange-600 dark:bg-orange-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 dark:hover:bg-orange-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 dark:focus-visible:outline-orange-500 disabled:opacity-50"
                   >
-                    {loading ? 'Salvando...' : 'Salvar'}
+                    {savingSimulacao ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Salvando...
+                      </>
+                    ) : (
+                      'Salvar Simulação'
+                    )}
                   </button>
                 </div>
               </div>
