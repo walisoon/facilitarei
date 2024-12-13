@@ -92,7 +92,7 @@ export const SimulacoesAPI = {
   },
 
   // Listar todas as simulações
-  async listar() {
+  async listar(): Promise<{ data: Simulacao[]; error: any }> {
     try {
       const { data, error } = await supabase
         .from('simulacoes')

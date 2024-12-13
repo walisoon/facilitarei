@@ -8,10 +8,12 @@ import { Dialog } from '@headlessui/react';
 import { Simulacao } from '@/types/simulacao';
 import { SimulacoesAPI } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import { NovoCredito } from '@/components/NovoCredito';
 
 export default function CreditosPage() {
   const { setTitle } = usePage();
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
+  const [isNovoCreditoModalOpen, setIsNovoCreditoModalOpen] = useState(false);
   const [selectedSimulacao, setSelectedSimulacao] = useState<Simulacao | null>(null);
   const [simulacoes, setSimulacoes] = useState<Simulacao[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,8 +21,11 @@ export default function CreditosPage() {
   const carregarSimulacoes = async () => {
     try {
       setLoading(true);
-      const data = await SimulacoesAPI.listar();
-      setSimulacoes(data as Simulacao[]);
+      const { data, error } = await SimulacoesAPI.listar();
+      if (error) {
+        throw error;
+      }
+      setSimulacoes(data as Simulacao[] || []);
     } catch (error) {
       console.error('Erro ao carregar simulações:', error);
       toast.error('Erro ao carregar simulações');
@@ -55,13 +60,15 @@ export default function CreditosPage() {
           </p>
         </div>
         <div className="mt-4 sm:ml-16 sm:mt-0">
-          <button
-            type="button"
-            className="flex items-center gap-1 rounded-md bg-orange-600 dark:bg-orange-500 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-orange-500 dark:hover:bg-orange-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 dark:focus-visible:outline-orange-500"
-          >
-            <Plus className="h-4 w-4" />
-            Novo Crédito
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIsNovoCreditoModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              <Plus className="w-4 h-4" />
+              Novo Crédito
+            </button>
+          </div>
         </div>
       </div>
 
@@ -107,19 +114,19 @@ export default function CreditosPage() {
                 scope="col"
                 className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-300"
               >
+                Número de Parcelas
+              </th>
+              <th
+                scope="col"
+                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-300"
+              >
+                Taxa de Entrada
+              </th>
+              <th
+                scope="col"
+                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-300"
+              >
                 Status
-              </th>
-              <th
-                scope="col"
-                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-300"
-              >
-                Data
-              </th>
-              <th
-                scope="col"
-                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-300"
-              >
-                Dia do Pagamento
               </th>
               <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
                 <span className="sr-only">Ações</span>
@@ -143,10 +150,16 @@ export default function CreditosPage() {
               simulacoes.map((credit) => (
                 <tr key={credit.id}>
                   <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-300 sm:pl-6">
-                    {credit.nome_cliente || credit.client}
+                    {credit.nome_cliente}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {credit.valor_emprestimo ? `R$ ${credit.valor_emprestimo.toFixed(2)}` : credit.value}
+                    {credit.valor_emprestimo && `R$ ${credit.valor_emprestimo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {credit.numero_parcelas}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {credit.taxa_entrada && `${credit.taxa_entrada.toFixed(2)}%`}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm">
                     <span
@@ -160,12 +173,6 @@ export default function CreditosPage() {
                     >
                       {credit.status}
                     </span>
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {credit.data_criacao || credit.date}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {credit.paymentDay}
                   </td>
                   <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                     <button
@@ -200,6 +207,11 @@ export default function CreditosPage() {
           </div>
         </div>
       </Dialog>
+
+      <NovoCredito
+        isOpen={isNovoCreditoModalOpen}
+        onClose={() => setIsNovoCreditoModalOpen(false)}
+      />
     </div>
   );
 }
