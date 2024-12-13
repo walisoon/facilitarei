@@ -164,7 +164,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
       
       if (error) {
         console.error('Erro detalhado:', error);
-        toast.error(`Erro ao salvar: ${error.message}`);
+        toast.error('Erro ao salvar a simulação');
         setSavingSimulacao(false);
         return;
       }
