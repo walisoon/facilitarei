@@ -125,15 +125,16 @@ export const SimulacoesAPI = {
         .from('simulacoes')
         .update({ status })
         .eq('id', id)
+        .select()
 
       if (error) {
         console.error('Erro ao atualizar status:', error)
-        throw new Error(`Erro ao atualizar status: ${error.message}`)
+        throw error
       }
       return { data: null, error: null };
     } catch (error) {
       console.error('Erro ao atualizar status:', error)
-      return { data: null, error };
+      throw error;
     }
   },
 

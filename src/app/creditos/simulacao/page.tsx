@@ -88,12 +88,22 @@ export default function SimulacaoPage() {
 
   const handleStatusChange = async (simulacaoId: number, newStatus: SimulacaoStatus) => {
     try {
+      setLoading(true);
       await SimulacoesAPI.atualizarStatus(simulacaoId, newStatus);
-      await carregarSimulacoes(); // Recarrega a lista
+      
+      // Atualiza o estado local para evitar recarregar toda a lista
+      setSimulacoes(prev => prev.map(simulacao => 
+        simulacao.id === simulacaoId 
+          ? { ...simulacao, status: newStatus }
+          : simulacao
+      ));
+      
       toast.success('Status atualizado com sucesso!');
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
       toast.error('Erro ao atualizar status');
+    } finally {
+      setLoading(false);
     }
   };
 
