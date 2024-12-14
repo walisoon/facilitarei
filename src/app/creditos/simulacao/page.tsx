@@ -115,12 +115,8 @@ export default function SimulacaoPage() {
   const confirmDelete = async () => {
     if (simulacaoToDelete?.id) {
       try {
-        const { error } = await SimulacoesAPI.excluir(simulacaoToDelete.id);
-        if (error) {
-          console.error('Erro ao excluir simulação:', error);
-          toast.error('Erro ao excluir simulação');
-          return;
-        }
+        setLoading(true);
+        await SimulacoesAPI.excluir(simulacaoToDelete.id);
         
         // Atualiza a lista local removendo a simulação excluída
         setSimulacoes(prev => prev.filter(s => s.id !== simulacaoToDelete.id));
@@ -129,11 +125,12 @@ export default function SimulacaoPage() {
         setShowDeleteModal(false);
         setSimulacaoToDelete(null);
         
-        // Notifica o usuário
         toast.success('Simulação excluída com sucesso!');
       } catch (error) {
         console.error('Erro ao excluir simulação:', error);
         toast.error('Erro ao excluir simulação');
+      } finally {
+        setLoading(false);
       }
     }
   };

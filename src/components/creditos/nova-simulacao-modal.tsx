@@ -356,32 +356,22 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
         <Dialog as="div" className="relative z-50" onClose={onClose}>
           <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
           <div className="fixed inset-0 flex items-center justify-center p-4">
-            <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-lg bg-gradient-to-b from-white/70 to-white/50 dark:from-gray-900/70 dark:to-gray-900/50 text-left shadow-xl transition-all backdrop-blur-sm">
-              <div className="flex h-full flex-col">
-                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                  <div className="flex justify-between items-center">
-                    <Dialog.Title className="text-lg font-medium text-gray-900 dark:text-white">
-                      Nova Simulação
-                    </Dialog.Title>
-                    <button
-                      onClick={onClose}
-                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="flex-1 overflow-y-auto p-4">
-                  <form 
-                    id="simulacaoForm"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      console.log("Formulário submetido");
-                      handleSubmit();
-                    }} 
-                    className="space-y-4"
+            <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-lg bg-white/10 dark:bg-gray-800/10 backdrop-blur-md border border-white/20 dark:border-gray-700/20 text-left align-middle shadow-xl transition-all">
+              <div className="flex flex-col h-[90vh]">
+                <div className="flex justify-between items-center px-4 py-3 border-b border-white/20 dark:border-gray-700/20 bg-white/5 dark:bg-gray-800/5 backdrop-blur-md">
+                  <Dialog.Title className="text-lg font-medium text-gray-900 dark:text-white">
+                    Nova Simulação
+                  </Dialog.Title>
+                  <button
+                    onClick={onClose}
+                    className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
                   >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto bg-white/5 dark:bg-gray-800/5 backdrop-blur-md">
+                  <form className="space-y-6 p-4">
                     <div className="grid grid-cols-2 gap-6">
                       <div>
                         <label htmlFor="nomeCliente" className="block text-sm font-medium bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
@@ -394,7 +384,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                           required
                           value={formData.nomeCliente}
                           onChange={handleChange}
-                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                          className="mt-1 block w-full rounded-md bg-white/10 dark:bg-gray-700/10 border border-white/20 dark:border-gray-600/20 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
                         />
                       </div>
 
@@ -409,7 +399,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                           required
                           value={formData.cpf}
                           onChange={handleChange}
-                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                          className="mt-1 block w-full rounded-md bg-white/10 dark:bg-gray-700/10 border border-white/20 dark:border-gray-600/20 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
                         />
                       </div>
 
@@ -424,7 +414,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                           required
                           value={formData.consultor}
                           onChange={handleChange}
-                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                          className="mt-1 block w-full rounded-md bg-white/10 dark:bg-gray-700/10 border border-white/20 dark:border-gray-600/20 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
                         />
                       </div>
 
@@ -438,7 +428,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                           id="dataNascimento"
                           value={formData.dataNascimento}
                           onChange={handleChange}
-                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                          className="mt-1 block w-full rounded-md bg-white/10 dark:bg-gray-700/10 border border-white/20 dark:border-gray-600/20 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
                         />
                       </div>
 
@@ -452,7 +442,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                           id="telefone"
                           value={formData.telefone}
                           onChange={handleChange}
-                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                          className="mt-1 block w-full rounded-md bg-white/10 dark:bg-gray-700/10 border border-white/20 dark:border-gray-600/20 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
                         />
                       </div>
 
@@ -466,7 +456,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                           id="email"
                           value={formData.email}
                           onChange={handleChange}
-                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                          className="mt-1 block w-full rounded-md bg-white/10 dark:bg-gray-700/10 border border-white/20 dark:border-gray-600/20 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
                         />
                       </div>
 
@@ -480,7 +470,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                           id="tipoBem"
                           value={formData.tipoBem}
                           onChange={handleChange}
-                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                          className="mt-1 block w-full rounded-md bg-white/10 dark:bg-gray-700/10 border border-white/20 dark:border-gray-600/20 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
                         />
                       </div>
 
@@ -494,7 +484,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                           required
                           value={formData.valorSelecionado}
                           onChange={handleChange}
-                          className="mt-1 block w-full rounded-md bg-white/40 dark:bg-gray-700/40 border border-white/60 dark:border-gray-600/60 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
+                          className="mt-1 block w-full rounded-md bg-white/10 dark:bg-gray-700/10 border border-white/20 dark:border-gray-600/20 shadow-sm focus:border-indigo-500 dark:focus:border-orange-500 focus:ring-indigo-500 dark:focus:ring-orange-500 sm:text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 backdrop-blur-sm transition-all duration-200"
                         >
                           <option value="">Selecione um valor de crédito</option>
                           {tabelaCredito.map(item => (
@@ -580,41 +570,48 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                     )}
 
                     {simulacoes.length > 0 && (
-                      <div className="mt-4">
-                        <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Simulações Adicionadas:</h3>
-                        <div className="space-y-2 mb-4">
+                      <div className="mt-8 space-y-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          Simulações Adicionadas:
+                        </h3>
+                        <div className="space-y-3">
                           {simulacoes.map((simulacao, index) => (
                             <div
                               key={index}
-                              className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-3 rounded-lg"
+                              className="relative bg-white dark:bg-gray-700/50 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-600/50 backdrop-blur-sm"
                             >
-                              <div>
-                                <p className="font-medium text-gray-900 dark:text-white">Simulação {index + 1}</p>
-                                <p className="text-sm text-gray-600 dark:text-gray-300">
-                                  Valor: R$ {simulacao.valor_emprestimo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                </p>
-                                <p className="text-sm text-gray-600 dark:text-gray-300">
-                                  Parcelas: {simulacao.numero_parcelas}x de R$ {simulacao.valor_parcela.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                </p>
+                              <div className="flex justify-between items-start">
+                                <div className="space-y-1">
+                                  <h4 className="text-base font-medium text-gray-900 dark:text-white">
+                                    Simulação {index + 1}
+                                  </h4>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                                    Valor: <span className="font-medium">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(simulacao.valor_emprestimo)}</span>
+                                  </p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                                    Parcelas: <span className="font-medium">{simulacao.numero_parcelas}x de {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(simulacao.valor_parcela)}</span>
+                                  </p>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => removerSimulacao(index)}
+                                  className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
                               </div>
-                              <button
-                                onClick={() => removerSimulacao(index)}
-                                className="text-red-600 hover:text-red-800 dark:text-red-500 dark:hover:text-red-400"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
                             </div>
                           ))}
                         </div>
-                        <div className="flex justify-center">
+                        <div className="flex justify-center pt-4">
                           <button
                             type="button"
-                            className="flex items-center justify-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             onClick={() => {
                               setIsPDFModalOpen(true);
                             }}
                           >
-                            <FileText className="h-4 w-4" />
+                            <FileText className="h-4 w-4 mr-2" />
                             Visualizar PDF
                           </button>
                         </div>
@@ -637,7 +634,11 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                     onClick={(e) => {
                       e.preventDefault();
                       console.log("Botão salvar clicado");
-                      handleSubmit();
+                      if (simulacoes.length > 0) {
+                        salvarTodasSimulacoes();
+                      } else {
+                        handleSubmit();
+                      }
                     }}
                     disabled={savingSimulacao}
                     className="inline-flex w-full justify-center items-center rounded-md bg-orange-600 dark:bg-orange-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 dark:hover:bg-orange-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 dark:focus-visible:outline-orange-500 disabled:opacity-50"
@@ -662,7 +663,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
       <Transition appear show={isPDFModalOpen} as={Fragment}>
         <Dialog 
           as="div" 
-          className="relative z-[999]" 
+          className="relative z-[9999]" 
           onClose={() => setIsPDFModalOpen(false)}
           static
         >
@@ -675,7 +676,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
           </Transition.Child>
 
           <div className="fixed inset-0 flex items-center justify-center p-4">

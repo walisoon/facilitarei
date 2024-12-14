@@ -144,13 +144,17 @@ export const SimulacoesAPI = {
       const { error } = await supabase
         .from('simulacoes')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select('id'); // Selecionamos apenas o ID para confirmar a exclusão
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao excluir simulação:', error);
+        throw error;
+      }
       return { data: null, error: null };
     } catch (error) {
       console.error('Erro ao excluir simulação:', error);
-      return { data: null, error };
+      throw error;
     }
   }
 }
