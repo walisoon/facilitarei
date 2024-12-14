@@ -333,10 +333,10 @@ export default function SimulacaoPage() {
                                             : 'text-gray-700 dark:text-gray-200'
                                         } group flex items-center w-full px-4 py-2 text-sm`}
                                       >
-                                        {simulacao.status === option.name && (
+                                        {simulacao.status === option.id && (
                                           <Check className="mr-2 h-4 w-4 text-orange-500" />
                                         )}
-                                        <span className={simulacao.status === option.name ? 'font-medium' : ''}>
+                                        <span className={simulacao.status === option.id ? 'font-medium' : ''}>
                                           {option.name}
                                         </span>
                                       </button>
