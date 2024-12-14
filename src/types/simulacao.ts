@@ -11,7 +11,7 @@ export interface Simulacao {
   numero_parcelas: number;
   taxa_entrada: number;
   valor_parcela: number;
-  status: string;
+  status: SimulacaoStatus;
   data_nascimento?: Date;
   telefone?: string;
   email?: string;
