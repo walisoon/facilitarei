@@ -44,7 +44,7 @@ export default function CreditosPage() {
   };
 
   useEffect(() => {
-    setTitle('Créditos');
+    setTitle('Fichas');
   }, [setTitle]);
 
   return (
@@ -53,20 +53,20 @@ export default function CreditosPage() {
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
           <h3 className="text-base font-semibold leading-6 text-gray-900 dark:text-white">
-            Créditos
+            Fichas
           </h3>
           <p className="mt-2 text-sm text-gray-700 dark:text-gray-400">
-            Gerencie todas as solicitações de crédito do sistema.
+            Gerencie todas as solicitações de ficha do sistema.
           </p>
         </div>
         <div className="mt-4 sm:ml-16 sm:mt-0">
           <div className="flex gap-2">
             <button
               onClick={() => setIsNovoCreditoModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
             >
               <Plus className="w-4 h-4" />
-              Novo Crédito
+              Nova Ficha
             </button>
           </div>
         </div>
@@ -86,7 +86,7 @@ export default function CreditosPage() {
               id="search"
               name="search"
               className="block w-full rounded-md border-0 bg-white dark:bg-gray-900 py-1.5 pl-10 pr-3 text-gray-900 dark:text-gray-300 ring-1 ring-inset ring-gray-300 dark:ring-gray-700 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-orange-600 dark:focus:ring-orange-500 sm:text-sm sm:leading-6"
-              placeholder="Buscar créditos..."
+              placeholder="Buscar fichas..."
               type="search"
             />
           </div>

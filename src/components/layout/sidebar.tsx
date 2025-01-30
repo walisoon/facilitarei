@@ -29,7 +29,7 @@ interface NavigationItem {
 const navigation: NavigationItem[] = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Simulação', href: '/creditos/simulacao', icon: CircleDollarSign },
-  { name: 'Créditos', href: '/creditos', icon: CreditCard },
+  { name: 'Ficha', href: '/creditos', icon: CreditCard },
   { name: 'Clientes', href: '/clientes', icon: Users },
   { name: 'Consultores', href: '/consultores', icon: UserPlus },
   { name: 'Usuários', href: '/usuarios', icon: Shield },

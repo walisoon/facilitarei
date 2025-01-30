@@ -5,11 +5,13 @@ import { Dialog, Transition } from '@headlessui/react';
 import { X } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { SimulacoesAPI } from '@/lib/supabase';
+import { supabase } from '@/config/supabase';
 import toast from 'react-hot-toast';
-import { Simulacao } from '@/types/simulacao';
 import { Combobox, Transition as HeadlessTransition } from '@headlessui/react';
 import { Check, ChevronDown } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
+import { Simulacao } from '@/types/simulacao';
 
 interface NovoCreditoProps {
   isOpen: boolean;
@@ -18,13 +20,17 @@ interface NovoCreditoProps {
 }
 
 export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
+  const [simulacoes, setSimulacoes] = useState<Simulacao[]>([]);
+  const [selectedSimulacao, setSelectedSimulacao] = useState<Simulacao | null>(null);
+  const [query, setQuery] = useState('');
+
   const [formData, setFormData] = useState({
     nome: '',
     cpf: '',
     rg: '',
     orgaoEmissor: '',
     data_nascimento: '',
-    naturalidade: 'SORRISO - MT',
+    naturalidade: '',
     estadoCivil: '',
     conjuge: '',
     filiacaoMaterna: '',
@@ -39,10 +45,9 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
     telefone2: '',
     email: '',
     profissao: '',
-    empresa: 'VIA BRASIL',
+    empresa: '',
     rendaIndividual: '',
     rendaFamiliar: '',
-    restricao: false,
     pontScore: '',
     tipoBem: {
       imovel: false,
@@ -52,28 +57,29 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
     valorBem: '',
     entrada: '',
     reducao: false,
-    prazo: '',
-    numeroSimulacao: '', 
+    prazo: '240', // Definir o prazo como 240
     consultor: '',
-    filial: 'MATRIZ'
+    filial: '',
+    documentos: [] as File[],
+    numeroSimulacao: ''
   });
-
-  const [simulacoes, setSimulacoes] = useState<Simulacao[]>([]);
-  const [selectedSimulacao, setSelectedSimulacao] = useState<Simulacao | null>(null);
-  const [query, setQuery] = useState('');
 
   const router = useRouter();
 
-  useEffect(() => {
-    if (isOpen) {
-      loadSimulacoes();
-    }
-  }, [isOpen]);
-
   const loadSimulacoes = async () => {
     try {
-      const { data, error } = await SimulacoesAPI.listar();
-      if (error) throw error;
+      console.log('Carregando simulações...');
+      const { data, error } = await supabase
+        .from('simulacoes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao carregar simulações:', error);
+        throw error;
+      }
+
+      console.log('Simulações carregadas:', data); // Log para verificar os dados retornados
       setSimulacoes(data || []);
     } catch (error) {
       console.error('Erro ao carregar simulações:', error);
@@ -81,88 +87,103 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
     }
   };
 
+  useEffect(() => {
+    if (isOpen) {
+      loadSimulacoes();
+    } else {
+      setSimulacoes([]);
+      setSelectedSimulacao(null);
+      setQuery('');
+    }
+  }, [isOpen]);
+
+  const filteredSimulacoes = query === ''
+    ? simulacoes
+    : simulacoes.filter((simulacao) => {
+        const searchStr = query.toLowerCase();
+        return (
+          simulacao.nome_cliente?.toLowerCase().includes(searchStr) ||
+          simulacao.cpf?.includes(searchStr) ||
+          simulacao.numero?.toLowerCase().includes(searchStr)
+        );
+      });
+
+  console.log('Simulações filtradas:', filteredSimulacoes);
+
   const handleSimulacaoSelect = (simulacao: Simulacao) => {
     setSelectedSimulacao(simulacao);
+    console.log('Número de parcelas selecionado:', simulacao.numero_parcelas);
     setFormData(prev => ({
       ...prev,
       nome: simulacao.nome_cliente || '',
       cpf: simulacao.cpf || '',
       telefone1: simulacao.telefone || '',
       email: simulacao.email || '',
-      tipoBem: {
-        imovel: simulacao.tipo_bem === 'IMÓVEL',
-        auto: simulacao.tipo_bem === 'AUTO',
-        pesados: simulacao.tipo_bem === 'PESADOS'
-      },
       valorBem: simulacao.valor_emprestimo?.toString() || '',
       entrada: simulacao.valor_entrada?.toString() || '',
-      reducao: false,
-      prazo: simulacao.numero_parcelas?.toString() || '',
-      numeroSimulacao: simulacao.numero || '' 
+      prazo: simulacao.valor_parcela?.toString() || '', // Atualizar a atribuição de prazo para usar o valor da parcela
+      tipoBem: {
+        ...prev.tipoBem,
+        [simulacao.tipo_bem?.toLowerCase() || 'imovel']: true
+      },
+      numeroSimulacao: simulacao.numero || ''
     }));
   };
 
-  const filteredSimulacoes = query === ''
-    ? simulacoes
-    : simulacoes.filter((simulacao) =>
-        simulacao.nome_cliente?.toLowerCase().includes(query.toLowerCase()) ||
-        simulacao.cpf?.includes(query)
-      );
-
-  const handleSimular = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    console.log('Iniciando simulação...', formData);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     
-    if (!formData.nome || !formData.cpf || !formData.consultor) {
-      toast.error('Por favor, preencha os campos obrigatórios: Nome, CPF e Consultor');
-      return;
-    }
-
     try {
-      // Prepare data for Supabase
-      const simulacaoData = {
-        nome_cliente: formData.nome,
-        cpf: formData.cpf,
-        consultor: formData.consultor,
-        valor_emprestimo: formData.valorBem ? parseFloat(formData.valorBem.replace(/[^\d.,]/g, '').replace(',', '.')) : 0,
-        valor_entrada: formData.entrada ? parseFloat(formData.entrada.replace(/[^\d.,]/g, '').replace(',', '.')) : 0,
-        numero_parcelas: formData.prazo ? parseInt(formData.prazo) : 0,
-        taxa_entrada: 0,
-        valor_parcela: 0,
-        status: 'Em Análise' as const,
-        data_nascimento: formData.data_nascimento ? new Date(formData.data_nascimento) : undefined,
-        telefone: formData.telefone1 || '',
-        email: formData.email || '',
-        tipo_bem: Object.entries(formData.tipoBem)
-          .filter(([_, value]) => value)
-          .map(([key]) => key.toUpperCase())
-          .join(', ') || '',
-        created_at: new Date().toISOString()
-      };
+      const { data, error } = await supabase
+        .from('creditos')
+        .insert([
+          {
+            nome: formData.nome,
+            cpf: formData.cpf,
+            rg: formData.rg,
+            orgao_emissor: formData.orgaoEmissor,
+            data_nascimento: formData.data_nascimento,
+            naturalidade: formData.naturalidade,
+            estado_civil: formData.estadoCivil,
+            conjuge: formData.conjuge,
+            filiacao_materna: formData.filiacaoMaterna,
+            filiacao_paterna: formData.filiacaoPaterna,
+            endereco: formData.endereco,
+            numero: formData.numero,
+            complemento: formData.complemento,
+            bairro: formData.bairro,
+            cep: formData.cep,
+            cidade_uf: formData.cidadeUF,
+            telefone1: formData.telefone1,
+            telefone2: formData.telefone2,
+            email: formData.email,
+            profissao: formData.profissao,
+            empresa: formData.empresa,
+            renda_individual: formData.rendaIndividual,
+            renda_familiar: formData.rendaFamiliar,
+            pont_score: formData.pontScore,
+            restricao: formData.restricao,
+            tipo_bem: formData.tipoBem,
+            valor_bem: formData.valorBem,
+            valor_entrada: formData.entrada,
+            prazo: formData.prazo,
+            reducao: formData.reducao,
+            consultor: formData.consultor,
+            filial: formData.filial
+          }
+        ])
 
-      console.log('Dados formatados para envio:', simulacaoData);
+      if (error) throw error
       
-      // Save to Supabase
-      const { data, error } = await SimulacoesAPI.criar(simulacaoData);
-      console.log('Resultado do Supabase:', { data, error });
+      // Gerar PDF após salvar
+      handleViewPDF()
       
-      if (error) {
-        throw error;
-      }
-
-      toast.success('Simulação salva com sucesso!');
+      toast.success('Crédito cadastrado com sucesso!')
+      onClose()
       
-      // Fechar o modal e redirecionar
-      onClose();
-      router.push('/creditos');
-      
-      // Chamar callback de sucesso se existir
-      if (onSuccess) {
-        onSuccess();
-      }
     } catch (error) {
-      console.error('Erro ao salvar simulação:', error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao salvar simulação');
+      console.error('Erro ao salvar:', error)
+      toast.error('Erro ao salvar o crédito')
     }
   };
 
@@ -187,11 +208,312 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
         }));
       }
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      // Se for um campo de valor monetário, formata o valor
+      if (name === 'valorBem' || name === 'entrada') {
+        setFormData(prev => ({
+          ...prev,
+          [name]: formatCurrency(value)
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          [name]: value
+        }));
+      }
     }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const validFiles = files.filter(file => {
+      const isValid = file.type === 'application/pdf' || file.type.startsWith('image/');
+      if (!isValid) {
+        toast.error(`Arquivo ${file.name} não suportado. Apenas PDF e imagens são permitidos.`);
+      }
+      return isValid;
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      documentos: [...prev.documentos, ...validFiles]
+    }));
+  };
+
+  const removeDocument = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      documentos: prev.documentos.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleViewPDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    
+    // Adiciona logo e informações do cabeçalho
+    doc.addImage('/images/logo.png', 'PNG', pageWidth - 50, 10, 40, 20);
+    
+    // Informações da empresa (lado esquerdo)
+    doc.setFontSize(8);
+    doc.text('FACILITA CRED - CORRESPONDENTE BANCÁRIO AUTORIZADO', 10, 15);
+    doc.text('Rua das Pitangueiras, Nº 274 - Setor Comercial - MT', 10, 20);
+    doc.text('Contato: (11) 5152-5823 ou (66) 9.9207-3183 - WWW.FACILITACREDSINOP.COM.BR', 10, 25);
+    
+    // Adicionar uma linha fina acima da data
+    const dateLineY = 31; // Nova posição vertical da linha
+    doc.setDrawColor(0); // Cor preta para a linha
+    doc.setLineWidth(0.1); // Define a largura da linha como fina
+    // Desenha a linha
+    doc.line(10, dateLineY, 200, dateLineY); // Ajuste as coordenadas conforme necessário
+
+    // Data
+    doc.setFontSize(10);
+    doc.text('Data', 12, 40);
+    doc.text(new Date().toLocaleDateString('pt-BR'), 32, 40);
+    
+    // Ajustar a posição vertical da data e do restante do conteúdo
+    const dateY = 45; // Nova posição vertical para a data
+    
+    // Função para desenhar título de seção
+    const drawSectionTitle = (title: string, y: number) => {
+      doc.setDrawColor(255, 230, 210); // Cor laranja suave para as linhas dos títulos
+      doc.rect(10, y, pageWidth - 20, 7);
+      doc.setFillColor(255, 236, 217);
+      doc.rect(10, y, pageWidth - 20, 7, 'F');
+      doc.text(title, 12, y + 5);
+    };
+    
+    // Dados Pessoais
+    drawSectionTitle('Dados Pessoais', 45);
+    
+    // Nome e CPF
+    doc.text('Nome', 12, 57);
+    doc.text(formData.nome || '', 42, 57);
+    
+    // Número da Simulação
+    doc.text('Nº Prosposta', 122, 57);
+    doc.text(formData.numeroSimulacao || '', 152, 57);
+    
+    // RG e CPF
+    doc.text('RG', 12, 64);
+    doc.text(`${formData.rg || ''} / Org.Em: ${formData.orgaoEmissor || ''}`, 42, 64);
+    doc.text('CPF', 122, 64);
+    doc.text(formData.cpf || '', 152, 64);
+    
+    // Data Nasc. e Naturalidade
+    doc.text('Data Nasc.', 12, 71);
+    doc.text(formData.data_nascimento || '', 42, 71);
+    doc.text('Naturalidade', 122, 71);
+    doc.text(formData.naturalidade || '', 152, 71);
+    
+    // Estado Civil e Cônjuge
+    doc.text('Estado Civil', 12, 78);
+    doc.text(formData.estadoCivil || '', 42, 78);
+    doc.text('Cônjuge', 122, 78);
+    doc.text(formData.conjuge || '', 152, 78);
+    
+    // Filiação
+    doc.text('Filiação Materna', 12, 85);
+    doc.text(formData.filiacaoMaterna || '', 42, 85);
+    
+    doc.text('Filiação Paterna', 12, 92);
+    doc.text(formData.filiacaoPaterna || '', 42, 92);
+    
+    // Endereço
+    drawSectionTitle('Endereço', 94);
+    
+    doc.text('Endereço', 12, 106);
+    doc.text(formData.endereco || '', 42, 106);
+    doc.text('Nº', 122, 106);
+    doc.text(formData.numero || '', 152, 106);
+    
+    // Complemento e Bairro
+    doc.text('Complemento', 12, 113);
+    doc.text(formData.complemento || '', 42, 113);
+    doc.text('Bairro', 122, 113);
+    doc.text(formData.bairro || '', 152, 113);
+    
+    // CEP e Cidade/UF
+    doc.text('CEP', 12, 120);
+    doc.text(formData.cep || '', 42, 120);
+    doc.text('Cidade/UF', 122, 120);
+    doc.text(formData.cidadeUF || '', 152, 120);
+    
+    // Contato
+    drawSectionTitle('Contato', 122);
+    
+    // Telefones
+    doc.text('Telefone 01', 12, 134);
+    doc.text(formData.telefone1 || '', 42, 134);
+    doc.text('Telefone 02', 122, 134);
+    doc.text(formData.telefone2 || '', 152, 134);
+    
+    // Email
+    doc.text('E-mail', 12, 141);
+    doc.text(formData.email || '', 42, 141);
+    
+    // Profissão
+    drawSectionTitle('Profissão', 143);
+    
+    doc.text('Profissão', 12, 155);
+    doc.text(formData.profissao || '', 42, 155);
+    doc.text('Empresa', 122, 155);
+    doc.text(formData.empresa || '', 152, 155);
+    
+    // Renda
+    doc.text('Renda Indiv.', 12, 162);
+    doc.text(formData.rendaIndividual ? `R$ ${formData.rendaIndividual.replace('.', ',')}` : '', 42, 162);
+    doc.text('Restrição', 122, 162);
+    
+    // Função para desenhar checkbox com visto
+    const drawCheckbox = (x: number, y: number, checked: boolean) => {
+      // Salva a cor atual
+      const currentDrawColor = doc.getDrawColor();
+      
+      // Define preto para a caixa
+      doc.setDrawColor(0);
+      doc.rect(x, y, 3, 3);
+      
+      if (checked) {
+        // Desenha um V usando linhas pretas
+        doc.setLineWidth(0.1);
+        doc.line(x + 0.5, y + 1.5, x + 1.2, y + 2.2);
+        doc.line(x + 1.2, y + 2.2, x + 2.5, y + 0.8);
+      }
+      
+      // Restaura a cor original
+      doc.setDrawColor(currentDrawColor);
+    };
+    
+    // Checkboxes para restrição
+    drawCheckbox(152, 159, formData.restricao);
+    doc.setFontSize(8);  // Restaura o tamanho da fonte para o texto
+    doc.text('SIM', 156, 162);
+    drawCheckbox(167, 159, !formData.restricao);
+    doc.text('NÃO', 171, 162);
+    
+    // Dados do Bem
+    drawSectionTitle('Dados do Bem', 164);
+    
+    // Tipo do bem
+    doc.text('Tipo do bem', 12, 176);
+    
+    // Valor da Parcela
+    const valorParcelaFormatado = formatCurrency(formData.prazo);
+    // Mover a exibição do valor da parcela para uma posição mais baixa
+    const novaPosicaoY = 190; // Ajustar conforme necessário
+    // Ajustar a posição do texto 'Valor da Parcela' para o lado direito
+    const posicaoTextoX = 122; // Ajustar conforme necessário para o lado direito
+    doc.text('Valor da Parcela', posicaoTextoX, novaPosicaoY); // Ajustar a posição X para alinhar à direita
+    // Ajustar a posição do valor da parcela para o lado direito
+    const posicaoX = 152; // Ajustar conforme necessário para o lado direito
+    doc.text(valorParcelaFormatado, posicaoX, novaPosicaoY);
+    
+    // Checkboxes para tipo do bem
+    drawCheckbox(42, 173, formData.tipoBem?.imovel);
+    doc.text('IMÓVEL', 46, 176);
+    drawCheckbox(67, 173, formData.tipoBem?.auto);
+    doc.text('AUTO', 71, 176);
+    drawCheckbox(92, 173, formData.tipoBem?.pesados);
+    doc.text('PESADOS', 96, 176);
+    
+    // Ajustar a posição do valor 'R$ 500.000,00' para afastá-lo do texto 'Valor do Bem'
+    doc.text('Valor do bem', 125, 176);
+    doc.text(formData.valorBem ? formatCurrency(formData.valorBem) : '', 150, 176);
+    
+    // Entrada e Parcelas
+    doc.text('Entrada', 12, 183);
+    doc.text(formData.entrada ? formatCurrency(formData.entrada) : '', 42, 183);
+    // Remover a exibição duplicada do valor da parcela
+    // doc.text(formData.prazo || '', 152, 183);
+    
+    // Redução
+    doc.text('Redução', 12, 190);
+    
+    // Checkboxes para redução
+    drawCheckbox(42, 187, formData.reducao);
+    doc.text('SIM', 46, 190);
+    drawCheckbox(57, 187, !formData.reducao);
+    doc.text('NÃO', 61, 190);
+    
+    // Definir o prazo como 240 ao exibir no PDF
+    doc.text('Prazo', 82, 190);
+    doc.text('240', 102, 190);
+    
+    // Dados do Consultor
+    drawSectionTitle('Dados do Consultor', 192);
+    
+    doc.text('Consultor', 12, 204);
+    doc.text(formData.consultor || '', 42, 204);
+    doc.text('Filial', 122, 204);
+    doc.text(formData.filial || '', 152, 204);
+    
+    // Texto de autorização
+    doc.setFontSize(5);
+    doc.setTextColor(80); // Cinza para o texto de autorização
+    
+    // Adicionar uma linha fina acima do termo
+    const lineY = 210; // Posição vertical da linha
+    doc.setDrawColor(0); // Cor preta para a linha
+    doc.setLineWidth(0.1); // Define a largura da linha como fina
+    // Desenha a linha
+    doc.line(10, lineY, 200, lineY); // Ajuste as coordenadas conforme necessário
+
+    // Centralizar o texto
+    const texto = 'Autorizo o envio deste formulário para solicitação de vaga e análise cadastral para as condições a mim apresentadas. Sabendo que no caso de aprovação, se optar por não ' +
+                  'dar continuidade no processo e nas condições aprovadas, poderei ficar restrito dentro do sistema de análise desta instituição durante o período de noventa dias, podendo ' +
+                  'fazer outra oferta apenas após o periodo de restrição. Todas as propostas são fiscalizadas e autorizadas pelo BACEN e regulamentados pela Lei Federal 11.795/08.';
+    
+    // Quebrar o texto em linhas
+    const splitText = doc.splitTextToSize(texto, 180); // Ajuste a largura conforme necessário
+    const x = (pageWidth - doc.getTextWidth(splitText[0])) / 2; // Centraliza a primeira linha
+
+    // Adiciona o texto quebrado
+    splitText.forEach((line, index) => {
+      doc.text(line, x, 215 + (index * 5), { align: 'justify' }); // Aumenta a posição vertical para cada linha
+    });
+    
+    // Linhas para assinatura
+    doc.setDrawColor(200, 200, 200); // Cinza claro para as linhas de assinatura
+    doc.setFontSize(10); // Ajusta o tamanho da fonte para as assinaturas
+    
+    doc.line(10, 245, 90, 245);
+    doc.text('Solicitante', 40, 250);
+    
+    doc.line(110, 245, 190, 245);
+    doc.text('Consultor Responsável', 135, 250);
+
+    // Salvar o PDF com o nome do cliente
+    const nomeArquivo = formData.nome ? 
+      `${formData.nome.toLowerCase().replace(/\s+/g, '-')}-ficha-cadastral.pdf` : 
+      'ficha-cadastral.pdf';
+    doc.save(nomeArquivo);
+  };
+
+  const calcularParcela = () => {
+    if (!formData.valorBem || !formData.entrada || !formData.prazo) return '0,00';
+    const valorFinanciado = parseFloat(formData.valorBem.replace(/\D/g, '')) - parseFloat(formData.entrada.replace(/\D/g, ''));
+    const parcela = valorFinanciado / parseInt(formData.prazo);
+    return parcela.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const formatCurrency = (value: string) => {
+    // Remove R$, espaços, pontos e qualquer caractere que não seja número ou vírgula
+    let number = value.replace(/[R$\s.]/g, '').replace(',', '.');
+    
+    // Se não houver números, retorna vazio
+    if (number === '') {
+      return '';
+    }
+    
+    // Converte para número
+    const amount = parseFloat(number);
+    
+    // Formata com R$, pontos e vírgulas
+    return `R$ ${amount.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
   };
 
   return (
@@ -234,81 +556,85 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                   </button>
                 </Dialog.Title>
 
-                {/* Seção de Simulação */}
-                <div className="mt-6 mb-6 bg-white/20 dark:bg-gray-700/10 backdrop-blur-sm p-4 rounded-lg border border-gray-200/20 dark:border-gray-600/20">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Importar Simulação</h4>
-                  <Combobox value={selectedSimulacao} onChange={handleSimulacaoSelect}>
-                    <div className="relative">
-                      <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white dark:bg-gray-700 text-left border border-gray-300 dark:border-gray-600 focus-within:border-orange-500 dark:focus-within:border-orange-400 focus-within:ring-1 focus-within:ring-orange-500 dark:focus-within:ring-orange-400">
-                        <Combobox.Input
-                          className="w-full border-none py-2.5 pl-3 pr-10 text-sm leading-5 text-gray-900 dark:text-white bg-transparent focus:ring-0"
-                          displayValue={(simulacao: Simulacao) => simulacao?.nome_cliente || ''}
-                          onChange={(event) => setQuery(event.target.value)}
-                          placeholder="Buscar por nome ou CPF..."
-                        />
-                        <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
-                          <ChevronDown
-                            className="h-5 w-5 text-gray-400 dark:text-gray-500"
-                            aria-hidden="true"
+                <form onSubmit={handleSubmit} className="mt-4 space-y-6">
+                  {/* Seletor de Simulação */}
+                  <div className="w-full">
+                    <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                      Selecionar Simulação
+                    </label>
+                    <Combobox value={selectedSimulacao} onChange={handleSimulacaoSelect}>
+                      <div className="relative mt-1">
+                        <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left border border-gray-300 dark:border-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm">
+                          <Combobox.Input
+                            className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 dark:text-gray-100 bg-transparent focus:ring-0"
+                            displayValue={(simulacao: Simulacao | null) => 
+                              simulacao ? `${simulacao.nome_cliente} - ${simulacao.numero || ''}` : ''
+                            }
+                            onChange={(event) => setQuery(event.target.value)}
+                            placeholder="Digite para buscar uma simulação..."
                           />
-                        </Combobox.Button>
-                      </div>
-                      <Transition
-                        as={Fragment}
-                        leave="transition ease-in duration-100"
-                        leaveFrom="opacity-100"
-                        leaveTo="opacity-0"
-                        afterLeave={() => setQuery('')}
-                      >
-                        <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-700 py-1 text-base shadow-lg ring-1 ring-black/5 dark:ring-white/5 focus:outline-none sm:text-sm">
-                          {filteredSimulacoes.length === 0 && query !== '' ? (
-                            <div className="relative cursor-default select-none px-4 py-2 text-gray-700 dark:text-gray-300">
-                              Nenhuma simulação encontrada.
-                            </div>
-                          ) : (
-                            filteredSimulacoes.map((simulacao) => (
-                              <Combobox.Option
-                                key={simulacao.id}
-                                className={({ active }) =>
-                                  `relative cursor-default select-none py-2.5 pl-10 pr-4 ${
-                                    active ? 'bg-orange-500 text-white' : 'text-gray-900 dark:text-white'
-                                  }`
-                                }
-                                value={simulacao}
-                              >
-                                {({ selected, active }) => (
-                                  <>
-                                    <span
-                                      className={`block truncate ${
-                                        selected ? 'font-medium' : 'font-normal'
-                                      }`}
-                                    >
-                                      {simulacao.nome_cliente} - CPF: {simulacao.cpf}
-                                      <span className={`ml-2 text-xs ${active ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
-                                        ({simulacao.numero}) - R$ {simulacao.valor_emprestimo?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                      </span>
-                                    </span>
-                                    {selected ? (
+                          <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+                            <ChevronDown
+                              className="h-5 w-5 text-gray-400"
+                              aria-hidden="true"
+                            />
+                          </Combobox.Button>
+                        </div>
+                        <Transition
+                          as={Fragment}
+                          leave="transition ease-in duration-100"
+                          leaveFrom="opacity-100"
+                          leaveTo="opacity-0"
+                          afterLeave={() => setQuery('')}
+                        >
+                          <Combobox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-900 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm z-50">
+                            {filteredSimulacoes.length === 0 ? (
+                              <div className="relative cursor-default select-none py-2 px-4 text-gray-700 dark:text-gray-300">
+                                {query === '' ? 'Nenhuma simulação disponível.' : 'Nenhuma simulação encontrada.'}
+                              </div>
+                            ) : (
+                              filteredSimulacoes.map((simulacao) => (
+                                <Combobox.Option
+                                  key={simulacao.id}
+                                  className={({ active }) =>
+                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                                      active ? 'bg-orange-500 text-white' : 'text-gray-900 dark:text-gray-100'
+                                    }`
+                                  }
+                                  value={simulacao}
+                                >
+                                  {({ selected, active }) => (
+                                    <>
                                       <span
-                                        className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                                          active ? 'text-white' : 'text-orange-500 dark:text-orange-400'
+                                        className={`block truncate ${
+                                          selected ? 'font-medium' : 'font-normal'
                                         }`}
                                       >
-                                        <Check className="h-5 w-5" aria-hidden="true" />
+                                        {simulacao.nome_cliente} - {simulacao.numero || ''} 
+                                        <span className="ml-2 text-sm opacity-75">
+                                          (R$ {simulacao.valor_emprestimo?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                                        </span>
                                       </span>
-                                    ) : null}
-                                  </>
-                                )}
-                              </Combobox.Option>
-                            ))
-                          )}
-                        </Combobox.Options>
-                      </Transition>
-                    </div>
-                  </Combobox>
-                </div>
+                                      {selected ? (
+                                        <span
+                                          className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
+                                            active ? 'text-white' : 'text-orange-600'
+                                          }`}
+                                        >
+                                          <Check className="h-5 w-5" aria-hidden="true" />
+                                        </span>
+                                      ) : null}
+                                    </>
+                                  )}
+                                </Combobox.Option>
+                              ))
+                            )}
+                          </Combobox.Options>
+                        </Transition>
+                      </div>
+                    </Combobox>
+                  </div>
 
-                <form className="mt-4 space-y-6">
                   {/* Dados Pessoais */}
                   <div className="space-y-4">
                     <h4 className="text-sm font-medium text-gray-900 dark:text-white">Dados Pessoais</h4>
@@ -319,7 +645,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                         placeholder="Nome"
                         value={formData.nome}
                         onChange={handleInputChange}
-                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                       />
                       
                       <div className="grid grid-cols-3 gap-4">
@@ -329,7 +655,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                           placeholder="CPF"
                           value={formData.cpf}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
                         <input
                           type="text"
@@ -337,7 +663,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                           placeholder="RG"
                           value={formData.rg}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
                         <input
                           type="text"
@@ -345,7 +671,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                           placeholder="Org. Em"
                           value={formData.orgaoEmissor}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
                       </div>
 
@@ -356,7 +682,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                           placeholder="Data Nasc."
                           value={formData.data_nascimento}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
                         <input
                           type="text"
@@ -364,8 +690,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                           placeholder="Naturalidade"
                           value={formData.naturalidade}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
-                          readOnly
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
                       </div>
 
@@ -376,7 +701,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                           placeholder="Estado Civil"
                           value={formData.estadoCivil}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
                         <input
                           type="text"
@@ -384,7 +709,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                           placeholder="Cônjuge"
                           value={formData.conjuge}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
                       </div>
 
@@ -394,7 +719,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                         placeholder="Filiação Materna"
                         value={formData.filiacaoMaterna}
                         onChange={handleInputChange}
-                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                       />
 
                       <input
@@ -403,7 +728,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                         placeholder="Filiação Paterna"
                         value={formData.filiacaoPaterna}
                         onChange={handleInputChange}
-                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                       />
                     </div>
                   </div>
@@ -420,7 +745,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                             placeholder="Endereço"
                             value={formData.endereco}
                             onChange={handleInputChange}
-                            className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                            className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                           />
                         </div>
                         <input
@@ -429,7 +754,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                           placeholder="Nº"
                           value={formData.numero}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
                         <input
                           type="text"
@@ -437,7 +762,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                           placeholder="Bairro"
                           value={formData.bairro}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
                       </div>
 
@@ -448,7 +773,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                           placeholder="Complemento"
                           value={formData.complemento}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
                         <input
                           type="text"
@@ -456,7 +781,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                           placeholder="CEP"
                           value={formData.cep}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
                         <input
                           type="text"
@@ -464,7 +789,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                           placeholder="Cidade/UF"
                           value={formData.cidadeUF}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
                       </div>
                     </div>
@@ -480,7 +805,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                         placeholder="Telefone 01"
                         value={formData.telefone1}
                         onChange={handleInputChange}
-                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                       />
                       <input
                         type="tel"
@@ -488,7 +813,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                         placeholder="Telefone 02"
                         value={formData.telefone2}
                         onChange={handleInputChange}
-                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                       />
                       <input
                         type="email"
@@ -496,7 +821,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                         placeholder="E-mail"
                         value={formData.email}
                         onChange={handleInputChange}
-                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                       />
                     </div>
                   </div>
@@ -504,66 +829,71 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                   {/* Profissão */}
                   <div className="space-y-4">
                     <h4 className="text-sm font-medium text-gray-900 dark:text-white">Profissão</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <input
-                          type="text"
-                          name="profissao"
-                          placeholder="Profissão"
-                          value={formData.profissao}
-                          onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
-                        />
-                        <input
-                          type="text"
-                          name="empresa"
-                          placeholder="Empresa"
-                          value={formData.empresa}
-                          onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
-                          readOnly
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <input
-                          type="text"
-                          name="rendaIndividual"
-                          placeholder="Renda Indiv."
-                          value={formData.rendaIndividual}
-                          onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
-                        />
-                        <div className="flex items-center gap-2">
-                          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                            <span>Restrição:</span>
-                            <input
-                              type="checkbox"
-                              name="restricao"
-                              checked={formData.restricao}
-                              onChange={handleInputChange}
-                              className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                            />
-                          </label>
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <input
+                        type="text"
+                        name="profissao"
+                        placeholder="Profissão"
+                        value={formData.profissao}
+                        onChange={handleInputChange}
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                      />
+                      <input
+                        type="text"
+                        name="empresa"
+                        placeholder="Empresa"
+                        value={formData.empresa}
+                        onChange={handleInputChange}
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                      />
+                      <input
+                        type="text"
+                        name="rendaIndividual"
+                        placeholder="Renda Individual"
+                        value={formData.rendaIndividual}
+                        onChange={handleInputChange}
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                      />
+                      <input
+                        type="text"
+                        name="rendaFamiliar"
+                        placeholder="Renda Familiar"
+                        value={formData.rendaFamiliar}
+                        onChange={handleInputChange}
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                      />
+                      <input
+                        type="text"
+                        name="pontScore"
+                        placeholder="Pont. Score"
+                        value={formData.pontScore}
+                        onChange={handleInputChange}
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                      />
+                      <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                          <input
+                            type="checkbox"
+                            name="restricao"
+                            checked={formData.restricao}
+                            onChange={handleInputChange}
+                            className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-orange-600 dark:text-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400"
+                          />
+                          <span>Restrição</span>
+                        </label>
                       </div>
                     </div>
                   </div>
 
                   {/* Dados do Bem */}
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2">
                       <h4 className="text-lg font-medium text-gray-900 dark:text-white">Dados do Bem</h4>
-                      {formData.numeroSimulacao && (
-                        <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-md">
-                          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Simulação:</span>
-                          <span className="text-sm text-gray-900 dark:text-white">{formData.numeroSimulacao}</span>
-                        </div>
-                      )}
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-4">
                       {/* Tipo do Bem */}
-                      <div className="flex gap-6">
+                      <div className="flex justify-start gap-8">
                         <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                           <input
                             type="checkbox"
@@ -596,43 +926,44 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                         </label>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-2 gap-4 w-[800px]">
                         <input
                           type="text"
                           name="valorBem"
-                          placeholder="Valor do bem"
+                          placeholder="R$ 0,00"
                           value={formData.valorBem}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
                         <input
                           type="text"
                           name="entrada"
-                          placeholder="Entrada"
+                          placeholder="R$ 0,00"
                           value={formData.entrada}
                           onChange={handleInputChange}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
-                        <div className="flex items-center gap-4">
-                          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                            <span>Redução:</span>
-                            <input
-                              type="checkbox"
-                              name="reducao"
-                              checked={formData.reducao}
-                              onChange={handleInputChange}
-                              className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                            />
-                          </label>
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                          <span>Redução:</span>
                           <input
-                            type="text"
-                            name="prazo"
-                            placeholder="Prazo"
-                            value={formData.prazo}
+                            type="checkbox"
+                            name="reducao"
+                            checked={formData.reducao}
                             onChange={handleInputChange}
-                            className="block w-24 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                            className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-orange-600 dark:text-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400"
                           />
-                        </div>
+                        </label>
+                        <input
+                          type="text"
+                          name="prazo"
+                          placeholder="Prazo"
+                          value={formData.prazo}
+                          onChange={handleInputChange}
+                          className="block w-24 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                        />
                       </div>
                     </div>
                   </div>
@@ -640,14 +971,14 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                   {/* Dados do Consultor */}
                   <div className="space-y-4">
                     <h4 className="text-sm font-medium text-gray-900 dark:text-white">Dados do Consultor</h4>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4 w-[800px]">
                       <input
                         type="text"
                         name="consultor"
                         placeholder="Consultor"
                         value={formData.consultor}
                         onChange={handleInputChange}
-                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                       />
                       <input
                         type="text"
@@ -655,13 +986,70 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                         placeholder="Filial"
                         value={formData.filial}
                         onChange={handleInputChange}
-                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
-                        readOnly
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                       />
                     </div>
                   </div>
 
+                  {/* Documentos */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">Documentos</h4>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-center w-full">
+                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg cursor-pointer bg-white/50 dark:bg-gray-700/30 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <svg className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                              <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                            </svg>
+                            <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                              <span className="font-semibold">Clique para enviar</span> ou arraste e solte
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">PDF ou Imagens (JPG, PNG, GIF, etc)</p>
+                          </div>
+                          <input 
+                            type="file" 
+                            className="hidden" 
+                            onChange={handleFileChange}
+                            accept=".pdf,image/*"
+                            multiple
+                          />
+                        </label>
+                      </div>
+
+                      {/* Lista de documentos */}
+                      {formData.documentos.length > 0 && (
+                        <div className="space-y-2">
+                          {formData.documentos.map((doc, index) => (
+                            <div key={index} className="flex items-center justify-between p-2 bg-white/50 dark:bg-gray-700/30 rounded-lg">
+                              <div className="flex items-center space-x-2">
+                                <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <span className="text-sm text-gray-700 dark:text-gray-300">{doc.name}</span>
+                              </div>
+                              <button
+                                onClick={() => removeDocument(index)}
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full"
+                              >
+                                <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="mt-6 flex justify-end gap-4">
+                    <button
+                      type="button"
+                      onClick={() => handleViewPDF()}
+                      className="inline-flex justify-center rounded-md border border-transparent bg-orange-100 px-4 py-2 text-sm font-medium text-orange-900 hover:bg-orange-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+                    >
+                      Visualizar PDF
+                    </button>
                     <button
                       type="button"
                       onClick={onClose}
@@ -670,11 +1058,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                       Cancelar
                     </button>
                     <button
-                      type="button"
-                      onClick={(e) => {
-                        console.log('Clique no botão salvar detectado');
-                        handleSimular(e);
-                      }}
+                      type="submit"
                       className="inline-flex justify-center rounded-md bg-orange-500 dark:bg-orange-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-orange-600 dark:hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400 focus:ring-offset-2"
                     >
                       Salvar

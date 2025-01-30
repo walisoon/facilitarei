@@ -239,3 +239,17 @@ export const UsuariosAPI = {
     }
   }
 }
+
+export const DocumentosAPI = {
+  upload: async (file: File, creditoId: string) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${creditoId}/${Date.now()}.${fileExt}`;
+    
+    const { data, error } = await supabase.storage
+      .from('documentos')
+      .upload(fileName, file);
+
+    if (error) throw error;
+    return data;
+  }
+};
