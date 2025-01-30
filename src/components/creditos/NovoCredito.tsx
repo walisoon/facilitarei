@@ -250,6 +250,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     
+    // Continuar a geração do PDF após a imagem ser carregada
     // Adiciona logo e informações do cabeçalho
     doc.addImage('/images/logo.png', 'PNG', pageWidth - 50, 10, 40, 20);
     
@@ -260,11 +261,11 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
     doc.text('Contato: (11) 5152-5823 ou (66) 9.9207-3183 - WWW.FACILITACREDSINOP.COM.BR', 10, 25);
     
     // Adicionar uma linha fina acima da data
-    const dateLineY = 31; // Nova posição vertical da linha
-    doc.setDrawColor(0); // Cor preta para a linha
-    doc.setLineWidth(0.1); // Define a largura da linha como fina
+    const dateLineY = 31; 
+    doc.setDrawColor(0); 
+    doc.setLineWidth(0.1); 
     // Desenha a linha
-    doc.line(10, dateLineY, 200, dateLineY); // Ajuste as coordenadas conforme necessário
+    doc.line(10, dateLineY, 200, dateLineY); 
 
     // Data
     doc.setFontSize(10);
@@ -272,11 +273,11 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
     doc.text(new Date().toLocaleDateString('pt-BR'), 32, 40);
     
     // Ajustar a posição vertical da data e do restante do conteúdo
-    const dateY = 45; // Nova posição vertical para a data
+    const dateY = 45; 
     
     // Função para desenhar título de seção
     const drawSectionTitle = (title: string, y: number) => {
-      doc.setDrawColor(255, 230, 210); // Cor laranja suave para as linhas dos títulos
+      doc.setDrawColor(255, 230, 210); 
       doc.rect(10, y, pageWidth - 20, 7);
       doc.setFillColor(255, 236, 217);
       doc.rect(10, y, pageWidth - 20, 7, 'F');
@@ -387,7 +388,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
     
     // Checkboxes para restrição
     drawCheckbox(152, 159, formData.restricao);
-    doc.setFontSize(8);  // Restaura o tamanho da fonte para o texto
+    doc.setFontSize(8);  
     doc.text('SIM', 156, 162);
     drawCheckbox(167, 159, !formData.restricao);
     doc.text('NÃO', 171, 162);
@@ -401,12 +402,12 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
     // Valor da Parcela
     const valorParcelaFormatado = formatCurrency(formData.prazo);
     // Mover a exibição do valor da parcela para uma posição mais baixa
-    const novaPosicaoY = 190; // Ajustar conforme necessário
+    const novaPosicaoY = 190; 
     // Ajustar a posição do texto 'Valor da Parcela' para o lado direito
-    const posicaoTextoX = 122; // Ajustar conforme necessário para o lado direito
-    doc.text('Valor da Parcela', posicaoTextoX, novaPosicaoY); // Ajustar a posição X para alinhar à direita
+    const posicaoTextoX = 122; 
+    doc.text('Valor da Parcela', posicaoTextoX, novaPosicaoY); 
     // Ajustar a posição do valor da parcela para o lado direito
-    const posicaoX = 152; // Ajustar conforme necessário para o lado direito
+    const posicaoX = 152; 
     doc.text(valorParcelaFormatado, posicaoX, novaPosicaoY);
     
     // Checkboxes para tipo do bem
@@ -450,32 +451,32 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
     
     // Texto de autorização
     doc.setFontSize(5);
-    doc.setTextColor(80); // Cinza para o texto de autorização
+    doc.setTextColor(80); 
     
     // Adicionar uma linha fina acima do termo
-    const lineY = 210; // Posição vertical da linha
-    doc.setDrawColor(0); // Cor preta para a linha
-    doc.setLineWidth(0.1); // Define a largura da linha como fina
+    const lineY = 210; 
+    doc.setDrawColor(0); 
+    doc.setLineWidth(0.1); 
     // Desenha a linha
-    doc.line(10, lineY, 200, lineY); // Ajuste as coordenadas conforme necessário
-
+    doc.line(10, lineY, 200, lineY); 
+    
     // Centralizar o texto
     const texto = 'Autorizo o envio deste formulário para solicitação de vaga e análise cadastral para as condições a mim apresentadas. Sabendo que no caso de aprovação, se optar por não ' +
                   'dar continuidade no processo e nas condições aprovadas, poderei ficar restrito dentro do sistema de análise desta instituição durante o período de noventa dias, podendo ' +
                   'fazer outra oferta apenas após o periodo de restrição. Todas as propostas são fiscalizadas e autorizadas pelo BACEN e regulamentados pela Lei Federal 11.795/08.';
     
     // Quebrar o texto em linhas
-    const splitText = doc.splitTextToSize(texto, 180); // Ajuste a largura conforme necessário
-    const x = (pageWidth - doc.getTextWidth(splitText[0])) / 2; // Centraliza a primeira linha
+    const splitText = doc.splitTextToSize(texto, 180); 
+    const textX = (pageWidth - doc.getTextWidth(splitText[0])) / 2; 
 
     // Adiciona o texto quebrado
     splitText.forEach((line, index) => {
-      doc.text(line, x, 215 + (index * 5), { align: 'justify' }); // Aumenta a posição vertical para cada linha
+      doc.text(line, textX, 215 + (index * 5), { align: 'justify' }); 
     });
     
     // Linhas para assinatura
-    doc.setDrawColor(200, 200, 200); // Cinza claro para as linhas de assinatura
-    doc.setFontSize(10); // Ajusta o tamanho da fonte para as assinaturas
+    doc.setDrawColor(200, 200, 200); 
+    doc.setFontSize(10); 
     
     doc.line(10, 245, 90, 245);
     doc.text('Solicitante', 40, 250);
@@ -483,11 +484,28 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
     doc.line(110, 245, 190, 245);
     doc.text('Consultor Responsável', 135, 250);
 
-    // Salvar o PDF com o nome do cliente
-    const nomeArquivo = formData.nome ? 
-      `${formData.nome.toLowerCase().replace(/\s+/g, '-')}-ficha-cadastral.pdf` : 
-      'ficha-cadastral.pdf';
-    doc.save(nomeArquivo);
+    // Aplicando marca d'água por cima de todo o conteúdo
+    const img = new Image();
+    img.src = '/images/watermark.png';
+    img.onload = () => {
+      // Calculando posição central com proporções ajustadas
+      const pageHeight = doc.internal.pageSize.height;
+      const imgWidth = 170;
+      const imgHeight = 125;
+      const x = (pageWidth - imgWidth) / 2;
+      const y = (pageHeight - imgHeight) / 2;
+
+      doc.saveGraphicsState();
+      doc.setGState(new doc.GState({ opacity: 0.08 }));
+      doc.addImage(img, 'PNG', x, y, imgWidth, imgHeight);
+      doc.restoreGraphicsState();
+
+      // Salvar o PDF com o nome do cliente
+      const nomeArquivo = formData.nome ? 
+        `${formData.nome.toLowerCase().replace(/\s+/g, '-')}-ficha-cadastral.pdf` : 
+        'ficha-cadastral.pdf';
+      doc.save(nomeArquivo);
+    };
   };
 
   const calcularParcela = () => {
