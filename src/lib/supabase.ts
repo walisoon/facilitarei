@@ -352,6 +352,24 @@ export const CreditosAPI = {
     }
   },
 
+  // Atualizar ficha de crédito
+  async atualizar(id: string, credito: any) {
+    try {
+      const { data, error } = await supabase
+        .from('creditos')
+        .update(credito)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Erro ao atualizar ficha:', error);
+      return { data: null, error };
+    }
+  },
+
   // Atualizar status da ficha
   async atualizarStatus(id: number, status: SimulacaoStatus) {
     try {
