@@ -20,34 +20,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
   );
 
   useEffect(() => {
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Erro ao buscar sessão:', error);
+          return;
+        }
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error('Erro ao buscar sessão:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     getSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        router.refresh();
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) throw error;
-    router.refresh();
+      if (error) {
+        console.error('Erro no login:', error);
+        throw error;
+      }
+
+      if (data.user) {
+        router.refresh();
+      }
+    } catch (error) {
+      console.error('Erro no login:', error);
+      throw error;
+    }
   };
 
   const signUp = async (email: string, password: string) => {

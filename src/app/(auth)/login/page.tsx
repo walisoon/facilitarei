@@ -15,11 +15,25 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    
+    if (!email || !password) {
+      setError('Por favor, preencha todos os campos.');
+      return;
+    }
+
     try {
       await signIn(email, password);
       router.push('/');
     } catch (error: any) {
-      setError('Falha no login. Por favor, verifique suas credenciais.');
+      console.error('Erro no login:', error);
+      if (error.message === 'Invalid login credentials') {
+        setError('Email ou senha incorretos.');
+      } else if (error.message?.includes('network')) {
+        setError('Erro de conexão. Por favor, verifique sua internet.');
+      } else {
+        setError('Falha no login. Por favor, tente novamente.');
+      }
     }
   };
 
