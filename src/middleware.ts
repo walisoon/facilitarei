@@ -45,17 +45,28 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // Se não houver sessão e a rota não for de autenticação, redireciona para /login
-  if (!session && !['/login', '/signup'].includes(req.nextUrl.pathname)) {
+  // Rotas públicas que não precisam de autenticação
+  const publicRoutes = ['/login', '/signup'];
+  const isPublicRoute = publicRoutes.includes(req.nextUrl.pathname);
+
+  // Se não houver sessão e a rota não for pública, redireciona para /login
+  if (!session && !isPublicRoute) {
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = '/login';
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Se houver sessão e a rota for de autenticação, redireciona para /
-  if (session && ['/login', '/signup'].includes(req.nextUrl.pathname)) {
+  // Se houver sessão e estiver em uma rota pública, redireciona para /creditos
+  if (session && isPublicRoute) {
     const redirectUrl = req.nextUrl.clone();
-    redirectUrl.pathname = '/';
+    redirectUrl.pathname = '/creditos';
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // Se houver sessão e estiver na raiz, redireciona para /creditos
+  if (session && req.nextUrl.pathname === '/') {
+    const redirectUrl = req.nextUrl.clone();
+    redirectUrl.pathname = '/creditos';
     return NextResponse.redirect(redirectUrl);
   }
 
