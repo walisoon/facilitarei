@@ -5,7 +5,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { X } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase, CreditosAPI } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { Combobox, Transition as HeadlessTransition } from '@headlessui/react';
 import { Check, ChevronDown } from 'lucide-react';
@@ -264,16 +264,25 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
         }
       }
 
+      // Pegar o usuário atual
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user) {
+        toast.error('Usuário não autenticado');
+        return;
+      }
+
       // Criar objeto com os dados convertidos
       const data: Credito = {
         ...formData,
         ...numericFields,
-        restricao: Boolean(formData.restricao)
+        restricao: Boolean(formData.restricao),
+        user_id: user.id
       };
 
       if (creditoParaEditar) {
         // Atualizar ficha existente
-        const result = await CreditosAPI.atualizar(creditoParaEditar.id.toString(), data);
+        const result = await supabase.from('creditos').update({ ...data }).eq('id', creditoParaEditar.id);
         const { data: resultData, error } = result;
         console.log('Resposta da API:', { data: resultData, error });
         
@@ -284,7 +293,7 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
         toast.success('Ficha atualizada com sucesso!');
       } else {
         // Criar nova ficha
-        const result = await CreditosAPI.criar(data);
+        const result = await supabase.from('creditos').insert({ ...data });
         const { data: resultData, error } = result;
         console.log('Resposta da API:', { data: resultData, error });
         
