@@ -347,6 +347,18 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
     const files = e.target.files;
     if (!files) return;
 
+    // Pegar o usuário atual
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) {
+      console.error('Erro ao pegar usuário:', userError);
+      toast.error('Erro ao enviar documentos');
+      return;
+    }
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return;
+    }
+
     const validFiles = Array.from(files).filter(file => {
       const isValid = file.size <= MAX_FILE_SIZE;
       if (!isValid) {
@@ -361,7 +373,7 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
       const uploadPromises = validFiles.map(async (file) => {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${user_id}/${fileName}`;
+        const filePath = `${user.id}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('documentos')
