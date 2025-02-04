@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Search, FileText, Pencil, Trash2 } from 'lucide-react';
 import { usePage } from '@/contexts/page-context';
 import { jsPDF } from 'jspdf';
+import type { GState } from 'jspdf';
 import toast from 'react-hot-toast';
 import { CreditosAPI } from '@/lib/supabase';
 import { NovoCredito } from '@/components/creditos/NovoCredito';
@@ -51,7 +52,7 @@ export default function CreditosPage() {
 
   const handleViewPDF = (ficha: Ficha) => {
     const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
+    const pageWidth: number = doc.internal.pageSize.width;
     
     // Adiciona logo e informações do cabeçalho
     doc.addImage('/images/logo.png', 'PNG', pageWidth - 50, 10, 40, 20);
@@ -252,19 +253,20 @@ export default function CreditosPage() {
     const img = new Image();
     img.src = '/images/watermark.png';
     img.onload = () => {
-      const pageHeight = doc.internal.pageSize.height;
-      const imgWidth = 170;
-      const imgHeight = 125;
-      const x = (pageWidth - imgWidth) / 2;
-      const y = (pageHeight - imgHeight) / 2;
+      const pageHeight: number = doc.internal.pageSize.height;
+      const imgWidth: number = 170;
+      const imgHeight: number = 125;
+      const x: number = (pageWidth - imgWidth) / 2;
+      const y: number = (pageHeight - imgHeight) / 2;
 
       doc.saveGraphicsState();
-      doc.setGState(new doc.GState({ opacity: 0.08 }));
+      const gState = new doc.GState({ opacity: 0.08 }) as GState;
+      doc.setGState(gState);
       doc.addImage(img, 'PNG', x, y, imgWidth, imgHeight);
       doc.restoreGraphicsState();
 
       // Salvar o PDF
-      const nomeArquivo = ficha.nome ? 
+      const nomeArquivo: string = ficha.nome ? 
         `${ficha.nome.toLowerCase().replace(/\s+/g, '-')}-ficha-cadastral.pdf` : 
         'ficha-cadastral.pdf';
       doc.save(nomeArquivo);
