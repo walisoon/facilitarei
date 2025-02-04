@@ -92,6 +92,8 @@ const initialFormData: FormData = {
   documentos: []
 };
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: NovoCreditoProps) {
   // Função para pegar a data atual formatada YYYY-MM-DD
   const getCurrentDate = () => {
@@ -341,20 +343,54 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    const validFiles = files.filter(file => {
-      const isValid = file.type === 'application/pdf' || file.type.startsWith('image/');
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const validFiles = Array.from(files).filter(file => {
+      const isValid = file.size <= MAX_FILE_SIZE;
       if (!isValid) {
-        toast.error(`Arquivo ${file.name} não suportado. Apenas PDF e imagens são permitidos.`);
+        toast.error(`Arquivo ${file.name} é muito grande. Máximo: ${MAX_FILE_SIZE / 1024 / 1024}MB`);
       }
       return isValid;
     });
 
-    setFormData(prev => ({
-      ...prev,
-      documentos: [...prev.documentos, ...validFiles]
-    }));
+    if (validFiles.length === 0) return;
+
+    try {
+      const uploadPromises = validFiles.map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${user_id}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('documentos')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('documentos')
+          .getPublicUrl(filePath);
+
+        return {
+          nome: file.name,
+          url: publicUrl
+        };
+      });
+
+      const uploadedFiles = await Promise.all(uploadPromises);
+
+      setFormData(prev => ({
+        ...prev,
+        documentos: [...prev.documentos, ...uploadedFiles]
+      }));
+
+      toast.success('Documentos enviados com sucesso!');
+    } catch (error) {
+      console.error('Erro ao enviar documentos:', error);
+      toast.error('Erro ao enviar documentos');
+    }
   };
 
   const removeDocument = (index: number) => {
@@ -1145,7 +1181,7 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
                           <input 
                             type="file" 
                             className="hidden" 
-                            onChange={handleFileChange}
+                            onChange={handleFileUpload}
                             accept=".pdf,image/*"
                             multiple
                           />
@@ -1161,7 +1197,7 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
                                 <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                                   <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                 </svg>
-                                <span className="text-sm text-gray-700 dark:text-gray-300">{doc.name}</span>
+                                <span className="text-sm text-gray-700 dark:text-gray-300">{doc.nome}</span>
                               </div>
                               <button
                                 onClick={() => removeDocument(index)}
