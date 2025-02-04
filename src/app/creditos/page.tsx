@@ -187,17 +187,17 @@ export default function CreditosPage() {
     setIsModalOpen(true);
   };
 
-  const handleExcluir = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta ficha?')) return;
-    
+  const handleExcluir = async (id: number | undefined) => {
+    if (!id) return;
+
+    const confirmDelete = window.confirm('Tem certeza que deseja excluir esta ficha?');
+    if (!confirmDelete) return;
+
     try {
-      const { error } = await CreditosAPI.excluir(id);
-      if (error) throw error;
-      toast.success('Ficha excluída com sucesso!');
+      await CreditosAPI.excluir(id);
       loadFichas();
     } catch (error) {
       console.error('Erro ao excluir ficha:', error);
-      toast.error('Erro ao excluir ficha');
     }
   };
 

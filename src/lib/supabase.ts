@@ -396,16 +396,17 @@ export const CreditosAPI = {
   },
 
   // Excluir ficha de crédito
-  async excluir(id: string) {
+  async excluir(id: number) {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('creditos')
         .delete()
         .eq('id', id);
 
-      if (error) return { data: null, error };
-      return { data, error: null };
+      if (error) throw error;
+      return { data: null, error: null };
     } catch (error) {
+      console.error('Erro ao excluir ficha:', error);
       return { data: null, error };
     }
   }
