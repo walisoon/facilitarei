@@ -170,23 +170,46 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
     setFormData(prev => ({
       ...prev,
       // Dados pessoais
-      nome: simulacao.nome_cliente || '',
+      nome: simulacao.nome || '',
       cpf: simulacao.cpf || '',
       data_nascimento: getCurrentDate(), // Sempre usa a data atual
-      telefone1: simulacao.telefone || '',
+      telefone1: simulacao.telefone1 || '',
+      telefone2: simulacao.telefone2 || '',
       email: simulacao.email || '',
-
-      // Dados do financiamento
-      valor_bem: simulacao.valor_emprestimo?.toString() || '',
-      valor_entrada: simulacao.valor_entrada?.toString() || '',
-      prazo: simulacao.numero_parcelas?.toString() || '240',
-      numero: simulacao.numero || '',
-      consultor: simulacao.consultor || '',
-
-      // Tipo do bem
-      tipo_bem: simulacao.tipo_bem || ''
+      
+      // Dados profissionais
+      profissao: simulacao.profissao || '',
+      empresa: simulacao.empresa || '',
+      renda_individual: simulacao.renda_individual || 0,
+      
+      // Dados do bem
+      tipo_bem: simulacao.tipo_bem || '',
+      valor_bem: simulacao.valor_bem || 0,
+      valor_entrada: simulacao.valor_entrada || 0,
+      prazo: simulacao.prazo || 0,
+      
+      // Status
+      status: simulacao.status || 'Em análise',
+      
+      // Outros campos mantêm os valores padrão
+      rg: '',
+      orgao_emissor: '',
+      naturalidade: '',
+      estado_civil: '',
+      conjuge: '',
+      filiacao_materna: '',
+      filiacao_paterna: '',
+      endereco: '',
+      numero: '',
+      complemento: '',
+      bairro: '',
+      cep: '',
+      cidade_uf: '',
+      restricao: false,
+      consultor: '',
+      filial: ''
     }));
-
+    
     // Mostrar mensagem de sucesso
     toast.success('Dados da simulação carregados com sucesso!');
   };
