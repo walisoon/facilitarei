@@ -8,13 +8,24 @@ import toast from 'react-hot-toast';
 import { CreditosAPI } from '@/lib/supabase';
 import { NovoCredito } from '@/components/creditos/NovoCredito';
 
+interface Ficha {
+  id: string;
+  nome: string;
+  cpf: string;
+  rg: string;
+  data_nascimento: string;
+  estado_civil: string;
+  naturalidade: string;
+  [key: string]: any; // para outras propriedades que possam existir
+}
+
 export default function CreditosPage() {
   const { setTitle } = usePage();
-  const [fichas, setFichas] = useState([]);
+  const [fichas, setFichas] = useState<Ficha[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedFicha, setSelectedFicha] = useState(null);
+  const [selectedFicha, setSelectedFicha] = useState<Ficha | null>(null);
 
-  const handleViewPDF = (ficha) => {
+  const handleViewPDF = (ficha: Ficha) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     
@@ -267,12 +278,12 @@ export default function CreditosPage() {
     setIsModalOpen(true);
   };
 
-  const handleEditar = (ficha) => {
+  const handleEditar = (ficha: Ficha) => {
     setSelectedFicha(ficha);
     setIsModalOpen(true);
   };
 
-  const handleExcluir = async (id) => {
+  const handleExcluir = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir esta ficha?')) return;
     
     try {
