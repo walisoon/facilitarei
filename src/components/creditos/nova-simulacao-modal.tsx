@@ -7,6 +7,7 @@ import { SimulacaoPDF } from './simulacao-pdf';
 import { SimulacoesAPI } from '@/lib/supabase';
 import { toast } from 'react-hot-toast';
 import { tabelaCredito } from '@/data/tabelaCredito';
+import { SimulacaoStatus } from '@/types/simulacao';
 
 interface NovaSimulacaoModalProps {
   isOpen: boolean;
