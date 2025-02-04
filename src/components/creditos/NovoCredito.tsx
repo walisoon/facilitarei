@@ -580,6 +580,16 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
     doc.text('Consultor Responsável', 135, 250);
 
     // Aplicar marca d'água
+    const img = new Image();
+    img.src = '/images/watermark.png';
+      
+    // Calculando posição central com proporções ajustadas
+    const pageHeight = doc.internal.pageSize.height;
+    const imgWidth = 170;
+    const imgHeight = 125;
+    const x = (pageWidth - imgWidth) / 2;
+    const y = (pageHeight - imgHeight) / 2;
+
     const opacity = 0.08;
     doc.saveGraphicsState();
     doc.setGState({ opacity });
