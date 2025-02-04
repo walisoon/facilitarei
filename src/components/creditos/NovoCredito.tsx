@@ -250,14 +250,18 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
 
       // Converter campos numéricos
       const numericFields = {
-        renda_individual: parseFloat(formData.renda_individual),
-        valor_bem: parseFloat(formData.valor_bem),
-        valor_entrada: parseFloat(formData.valor_entrada),
+        renda_individual: parseFloat(formData.renda_individual.replace(/[^\d,]/g, '').replace(',', '.')),
+        renda_familiar: parseFloat(formData.renda_familiar.replace(/[^\d,]/g, '').replace(',', '.')) || 0,
+        pont_score: parseFloat(formData.pont_score) || 0,
+        valor_bem: parseFloat(formData.valor_bem.replace(/[^\d,]/g, '').replace(',', '.')),
+        valor_entrada: parseFloat(formData.valor_entrada.replace(/[^\d,]/g, '').replace(',', '.')),
         prazo: parseInt(formData.prazo)
       };
 
-      // Validar campos numéricos
-      for (const [field, value] of Object.entries(numericFields)) {
+      // Validar campos numéricos obrigatórios
+      const requiredNumericFields = ['renda_individual', 'valor_bem', 'valor_entrada', 'prazo'];
+      for (const field of requiredNumericFields) {
+        const value = numericFields[field as keyof typeof numericFields];
         if (isNaN(value)) {
           toast.error(`O campo ${field} deve ser um número válido`);
           return;
