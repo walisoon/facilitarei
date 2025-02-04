@@ -306,7 +306,7 @@ export const CreditosAPI = {
           
           // Sistema
           status: 'Em Análise',
-          user_id: supabase.auth.user()?.id
+          user_id: (await supabase.auth.getUser()).data.user?.id
         }])
         .select()
         .single();
