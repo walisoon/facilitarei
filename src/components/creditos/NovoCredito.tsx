@@ -68,7 +68,8 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
     consultor: '',
     filial: '',
     documentos: [] as File[],
-    numeroSimulacao: ''
+    numeroSimulacao: '',
+    restricao: false
   });
 
   // Carregar dados quando estiver editando
@@ -175,12 +176,14 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
     try {
       console.log('Iniciando submit...', formData);
       console.log('Tipo dos campos:', {
-        restricao: typeof formData.restricao,
-        reducao: typeof formData.reducao,
-        rendaIndividual: typeof formData.rendaIndividual,
         valorBem: typeof formData.valorBem,
         entrada: typeof formData.entrada,
-        prazo: typeof formData.prazo
+        prazo: typeof formData.prazo,
+        rendaIndividual: typeof formData.rendaIndividual,
+        rendaFamiliar: typeof formData.rendaFamiliar,
+        pontScore: typeof formData.pontScore,
+        reducao: typeof formData.reducao,
+        restricao: typeof formData.restricao
       });
 
       // Validar apenas campos básicos da simulação
