@@ -258,6 +258,8 @@ export const CreditosAPI = {
   // Criar nova ficha de crédito
   async criar(credito: any) {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { data, error } = await supabase
         .from('creditos')
         .insert([{
@@ -265,7 +267,7 @@ export const CreditosAPI = {
           cpf: credito.cpf,
           rg: credito.rg,
           orgao_emissor: credito.orgaoEmissor,
-          data_nascimento: credito.data_nascimento,
+          data_nascimento: credito.dataNascimento,
           naturalidade: credito.naturalidade,
           estado_civil: credito.estadoCivil,
           conjuge: credito.conjuge,
@@ -275,14 +277,14 @@ export const CreditosAPI = {
           // Endereço
           endereco: credito.endereco,
           numero: credito.numero,
-          complemento: credito.complemento,
+          complemento: credito.complemento || '',
           bairro: credito.bairro,
           cep: credito.cep,
           cidade_uf: credito.cidadeUF,
           
           // Contato
           telefone1: credito.telefone1,
-          telefone2: credito.telefone2,
+          telefone2: credito.telefone2 || '',
           email: credito.email,
           
           // Profissão e Renda
@@ -294,7 +296,7 @@ export const CreditosAPI = {
           restricao: credito.restricao || false,
           
           // Dados do Bem
-          tipo_bem: Object.keys(credito.tipoBem).find(key => credito.tipoBem[key]) || '',
+          tipo_bem: credito.tipoBem ? (Object.keys(credito.tipoBem).find(key => credito.tipoBem[key]) || '') : '',
           valor_bem: parseFloat(credito.valorBem?.replace(/[^\d,]/g, '').replace(',', '.')) || 0,
           valor_entrada: parseFloat(credito.entrada?.replace(/[^\d,]/g, '').replace(',', '.')) || 0,
           prazo: parseInt(credito.prazo) || 240,
@@ -306,7 +308,7 @@ export const CreditosAPI = {
           
           // Sistema
           status: 'Em Análise',
-          user_id: (await supabase.auth.getUser()).data.user?.id
+          user_id: user?.id
         }])
         .select()
         .single();
