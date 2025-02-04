@@ -21,6 +21,48 @@ interface NovoCreditoProps {
   creditoParaEditar?: any;
 }
 
+interface FormData {
+  [key: string]: any;
+  nome: string;
+  cpf: string;
+  rg: string;
+  orgaoEmissor: string;
+  data_nascimento: string;
+  naturalidade: string;
+  estadoCivil: string;
+  conjuge: string;
+  filiacaoMaterna: string;
+  filiacaoPaterna: string;
+  endereco: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  cep: string;
+  cidadeUF: string;
+  telefone1: string;
+  telefone2: string;
+  email: string;
+  profissao: string;
+  empresa: string;
+  rendaIndividual: string;
+  rendaFamiliar: string;
+  pontScore: string;
+  tipoBem: {
+    imovel: boolean;
+    auto: boolean;
+    pesados: boolean;
+  };
+  valorBem: string;
+  entrada: string;
+  reducao: boolean;
+  prazo: string;
+  consultor: string;
+  filial: string;
+  documentos: File[];
+  numeroSimulacao: string;
+  restricao: boolean;
+}
+
 export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: NovoCreditoProps) {
   // Função para pegar a data atual formatada YYYY-MM-DD
   const getCurrentDate = () => {
@@ -31,7 +73,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
   const [simulacoes, setSimulacoes] = useState<Simulacao[]>([]);
   const [selectedSimulacao, setSelectedSimulacao] = useState<Simulacao | null>(null);
   const [query, setQuery] = useState('');
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     nome: '',
     cpf: '',
     rg: '',
@@ -172,7 +214,9 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
     toast.success('Dados da simulação carregados com sucesso!');
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     try {
       console.log('Iniciando submit...', formData);
       console.log('Tipo dos campos:', {
@@ -186,10 +230,15 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
         restricao: typeof formData.restricao
       });
 
-      // Validar apenas campos básicos da simulação
+      // Validar campos obrigatórios
       const requiredFields = [
         'nome',
-        'cpf'
+        'cpf',
+        'rg',
+        'orgaoEmissor',
+        'data_nascimento',
+        'naturalidade',
+        'estadoCivil'
       ];
 
       const missingFields = requiredFields.filter(field => !formData[field]);
@@ -620,7 +669,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
                   </button>
                 </Dialog.Title>
 
-                <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="mt-4 space-y-6">
+                <form onSubmit={handleSubmit} className="mt-4 space-y-6">
                   {/* Seletor de Simulação */}
                   <div className="w-full">
                     <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
