@@ -9,107 +9,92 @@ import { supabase, CreditosAPI } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { Combobox, Transition as HeadlessTransition } from '@headlessui/react';
 import { Check, ChevronDown } from 'lucide-react';
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
-import { Simulacao } from '@/types/simulacao';
+import { Credito } from '@/types/credito';
 
 interface NovoCreditoProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  creditoParaEditar?: any;
+  creditoParaEditar?: Credito;
 }
 
 interface FormData {
-  [key: string]: any;
   nome: string;
   cpf: string;
   rg: string;
-  orgaoEmissor: string;
+  orgao_emissor: string;
   data_nascimento: string;
   naturalidade: string;
-  estadoCivil: string;
+  estado_civil: string;
   conjuge: string;
-  filiacaoMaterna: string;
-  filiacaoPaterna: string;
+  filiacao_materna: string;
+  filiacao_paterna: string;
   endereco: string;
   numero: string;
   complemento: string;
   bairro: string;
   cep: string;
-  cidadeUF: string;
+  cidade_uf: string;
   telefone1: string;
   telefone2: string;
   email: string;
   profissao: string;
   empresa: string;
-  rendaIndividual: string;
-  rendaFamiliar: string;
-  pontScore: string;
-  tipoBem: {
-    imovel: boolean;
-    auto: boolean;
-    pesados: boolean;
-  };
-  valorBem: string;
-  entrada: string;
-  reducao: boolean;
+  renda_individual: string;
+  renda_familiar: string;
+  pont_score: string;
+  tipo_bem: string;
+  valor_bem: string;
+  valor_entrada: string;
   prazo: string;
+  reducao: boolean;
   consultor: string;
   filial: string;
-  documentos: File[];
-  numeroSimulacao: string;
   restricao: boolean;
 }
 
-export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: NovoCreditoProps) {
+export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: NovoCreditoProps) {
   // Função para pegar a data atual formatada YYYY-MM-DD
   const getCurrentDate = () => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   };
 
-  const [simulacoes, setSimulacoes] = useState<Simulacao[]>([]);
-  const [selectedSimulacao, setSelectedSimulacao] = useState<Simulacao | null>(null);
+  const [simulacoes, setSimulacoes] = useState<Credito[]>([]);
+  const [selectedSimulacao, setSelectedSimulacao] = useState<Credito | null>(null);
   const [query, setQuery] = useState('');
   const [formData, setFormData] = useState<FormData>({
     nome: '',
     cpf: '',
     rg: '',
-    orgaoEmissor: '',
+    orgao_emissor: '',
     data_nascimento: getCurrentDate(),
     naturalidade: '',
-    estadoCivil: '',
+    estado_civil: '',
     conjuge: '',
-    filiacaoMaterna: '',
-    filiacaoPaterna: '',
+    filiacao_materna: '',
+    filiacao_paterna: '',
     endereco: '',
     numero: '',
     complemento: '',
     bairro: '',
     cep: '',
-    cidadeUF: '',
+    cidade_uf: '',
     telefone1: '',
     telefone2: '',
     email: '',
     profissao: '',
     empresa: '',
-    rendaIndividual: '',
-    rendaFamiliar: '',
-    pontScore: '',
-    tipoBem: {
-      imovel: false,
-      auto: false,
-      pesados: false
-    },
-    valorBem: '',
-    entrada: '',
-    reducao: false,
+    renda_individual: '',
+    renda_familiar: '',
+    pont_score: '',
+    tipo_bem: '',
+    valor_bem: '',
+    valor_entrada: '',
     prazo: '240',
+    reducao: false,
     consultor: '',
     filial: '',
-    documentos: [] as File[],
-    numeroSimulacao: '',
     restricao: false
   });
 
@@ -119,20 +104,15 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
       setFormData({
         ...formData,
         ...creditoParaEditar,
-        tipoBem: {
-          imovel: creditoParaEditar.tipo_bem === 'imovel',
-          auto: creditoParaEditar.tipo_bem === 'auto',
-          pesados: creditoParaEditar.tipo_bem === 'pesados'
-        },
         data_nascimento: getCurrentDate(), // Sempre usa a data atual
-        valorBem: creditoParaEditar.valor_bem?.toString() || '',
-        entrada: creditoParaEditar.valor_entrada?.toString() || '',
+        valor_bem: creditoParaEditar.valor_bem?.toString() || '',
+        valor_entrada: creditoParaEditar.valor_entrada?.toString() || '',
         prazo: creditoParaEditar.prazo?.toString() || '240',
-        rendaIndividual: creditoParaEditar.renda_individual?.toString() || '',
-        rendaFamiliar: creditoParaEditar.renda_familiar?.toString() || '',
-        pontScore: creditoParaEditar.pont_score?.toString() || '',
-        orgaoEmissor: creditoParaEditar.orgao_emissor || '',
-        cidadeUF: creditoParaEditar.cidade_uf || ''
+        renda_individual: creditoParaEditar.renda_individual?.toString() || '',
+        renda_familiar: creditoParaEditar.renda_familiar?.toString() || '',
+        pont_score: creditoParaEditar.pont_score?.toString() || '',
+        orgao_emissor: creditoParaEditar.orgao_emissor || '',
+        cidade_uf: creditoParaEditar.cidade_uf || ''
       });
     }
   }, [creditoParaEditar]);
@@ -183,7 +163,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
 
   console.log('Simulações filtradas:', filteredSimulacoes);
 
-  const handleSimulacaoSelect = (simulacao: Simulacao) => {
+  const handleSimulacaoSelect = (simulacao: Credito) => {
     setSelectedSimulacao(simulacao);
     setFormData(prev => ({
       ...prev,
@@ -195,18 +175,14 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
       email: simulacao.email || '',
 
       // Dados do financiamento
-      valorBem: simulacao.valor_emprestimo?.toString() || '',
-      entrada: simulacao.valor_entrada?.toString() || '',
+      valor_bem: simulacao.valor_emprestimo?.toString() || '',
+      valor_entrada: simulacao.valor_entrada?.toString() || '',
       prazo: simulacao.numero_parcelas?.toString() || '240',
-      numeroSimulacao: simulacao.numero || '',
+      numero: simulacao.numero || '',
       consultor: simulacao.consultor || '',
 
       // Tipo do bem
-      tipoBem: {
-        imovel: simulacao.tipo_bem?.toLowerCase() === 'imovel',
-        auto: simulacao.tipo_bem?.toLowerCase() === 'auto',
-        pesados: simulacao.tipo_bem?.toLowerCase() === 'pesados'
-      }
+      tipo_bem: simulacao.tipo_bem || ''
     }));
 
     // Mostrar mensagem de sucesso
@@ -219,12 +195,12 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
     try {
       console.log('Iniciando submit...', formData);
       console.log('Tipo dos campos:', {
-        valorBem: typeof formData.valorBem,
-        entrada: typeof formData.entrada,
+        valor_bem: typeof formData.valor_bem,
+        valor_entrada: typeof formData.valor_entrada,
         prazo: typeof formData.prazo,
-        rendaIndividual: typeof formData.rendaIndividual,
-        rendaFamiliar: typeof formData.rendaFamiliar,
-        pontScore: typeof formData.pontScore,
+        renda_individual: typeof formData.renda_individual,
+        renda_familiar: typeof formData.renda_familiar,
+        pont_score: typeof formData.pont_score,
         reducao: typeof formData.reducao,
         restricao: typeof formData.restricao
       });
@@ -234,10 +210,10 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
         'nome',
         'cpf',
         'rg',
-        'orgaoEmissor',
+        'orgao_emissor',
         'data_nascimento',
         'naturalidade',
-        'estadoCivil'
+        'estado_civil'
       ];
 
       const missingFields = requiredFields.filter(field => !formData[field]);
@@ -248,21 +224,50 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
         return;
       }
 
-      // Validar se pelo menos um tipo de bem foi selecionado
-      if (!formData.tipoBem.imovel && !formData.tipoBem.auto && !formData.tipoBem.pesados) {
-        toast.error('Por favor, selecione o tipo do bem');
-        return;
-      }
-
       console.log('Tentando salvar ficha...');
       let result;
       
+      const creditoData = {
+        nome: formData.nome,
+        cpf: formData.cpf,
+        rg: formData.rg,
+        orgao_emissor: formData.orgao_emissor,
+        data_nascimento: formData.data_nascimento,
+        naturalidade: formData.naturalidade,
+        estado_civil: formData.estado_civil,
+        conjuge: formData.conjuge,
+        filiacao_materna: formData.filiacao_materna,
+        filiacao_paterna: formData.filiacao_paterna,
+        endereco: formData.endereco,
+        numero: formData.numero,
+        complemento: formData.complemento,
+        bairro: formData.bairro,
+        cep: formData.cep,
+        cidade_uf: formData.cidade_uf,
+        telefone1: formData.telefone1,
+        telefone2: formData.telefone2,
+        email: formData.email,
+        profissao: formData.profissao,
+        empresa: formData.empresa,
+        renda_individual: parseFloat(formData.renda_individual.replace(/[^\d,]/g, '').replace(',', '.')),
+        renda_familiar: parseFloat(formData.renda_familiar.replace(/[^\d,]/g, '').replace(',', '.')),
+        pont_score: parseFloat(formData.pont_score),
+        tipo_bem: formData.tipo_bem,
+        valor_bem: parseFloat(formData.valor_bem.replace(/[^\d,]/g, '').replace(',', '.')),
+        valor_entrada: parseFloat(formData.valor_entrada.replace(/[^\d,]/g, '').replace(',', '.')),
+        prazo: parseInt(formData.prazo),
+        reducao: formData.reducao,
+        consultor: formData.consultor,
+        filial: formData.filial,
+        restricao: formData.restricao
+      };
+      
       if (creditoParaEditar) {
         // Atualizar ficha existente
-        result = await CreditosAPI.atualizar(creditoParaEditar.id, formData);
+        result = await CreditosAPI.atualizar(creditoParaEditar.id.toString(), creditoData);
       } else {
         // Criar nova ficha
-        result = await CreditosAPI.criar(formData);
+        result = await CreditosAPI.criar(creditoData);
       }
 
       const { data, error } = result;
@@ -286,24 +291,13 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
     
     if (type === 'checkbox') {
       const checkbox = e.target as HTMLInputElement;
-      if (name.startsWith('tipoBem.')) {
-        const tipoBemKey = name.split('.')[1];
-        setFormData(prev => ({
-          ...prev,
-          tipoBem: {
-            ...prev.tipoBem,
-            [tipoBemKey]: checkbox.checked
-          }
-        }));
-      } else {
-        setFormData(prev => ({
-          ...prev,
-          [name]: checkbox.checked
-        }));
-      }
+      setFormData(prev => ({
+        ...prev,
+        [name]: checkbox.checked
+      }));
     } else {
       // Se for um campo de valor monetário, formata o valor
-      if (name === 'valorBem' || name === 'entrada') {
+      if (name === 'valor_bem' || name === 'valor_entrada') {
         setFormData(prev => ({
           ...prev,
           [name]: formatCurrency(value)
@@ -387,11 +381,11 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
     
     // Número da Simulação
     doc.text('Nº Prosposta', 122, 57);
-    doc.text(formData.numeroSimulacao || '', 152, 57);
+    doc.text(formData.numero || '', 152, 57);
     
     // RG e CPF
     doc.text('RG', 12, 64);
-    doc.text(`${formData.rg || ''} / Org.Em: ${formData.orgaoEmissor || ''}`, 42, 64);
+    doc.text(`${formData.rg || ''} / Org.Em: ${formData.orgao_emissor || ''}`, 42, 64);
     doc.text('CPF', 122, 64);
     doc.text(formData.cpf || '', 152, 64);
     
@@ -403,16 +397,16 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
     
     // Estado Civil e Cônjuge
     doc.text('Estado Civil', 12, 78);
-    doc.text(formData.estadoCivil || '', 42, 78);
+    doc.text(formData.estado_civil || '', 42, 78);
     doc.text('Cônjuge', 122, 78);
     doc.text(formData.conjuge || '', 152, 78);
     
     // Filiação
     doc.text('Filiação Materna', 12, 85);
-    doc.text(formData.filiacaoMaterna || '', 42, 85);
+    doc.text(formData.filiacao_materna || '', 42, 85);
     
     doc.text('Filiação Paterna', 12, 92);
-    doc.text(formData.filiacaoPaterna || '', 42, 92);
+    doc.text(formData.filiacao_paterna || '', 42, 92);
     
     // Endereço
     drawSectionTitle('Endereço', 94);
@@ -432,7 +426,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
     doc.text('CEP', 12, 120);
     doc.text(formData.cep || '', 42, 120);
     doc.text('Cidade/UF', 122, 120);
-    doc.text(formData.cidadeUF || '', 152, 120);
+    doc.text(formData.cidade_uf || '', 152, 120);
     
     // Contato
     drawSectionTitle('Contato', 122);
@@ -457,7 +451,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
     
     // Renda
     doc.text('Renda Indiv.', 12, 162);
-    doc.text(formData.rendaIndividual ? `R$ ${formData.rendaIndividual.replace('.', ',')}` : '', 42, 162);
+    doc.text(formData.renda_individual ? `R$ ${formData.renda_individual.replace('.', ',')}` : '', 42, 162);
     doc.text('Restrição', 122, 162);
     
     // Função para desenhar checkbox com visto
@@ -505,20 +499,20 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
     doc.text(valorParcelaFormatado, posicaoX, novaPosicaoY);
     
     // Checkboxes para tipo do bem
-    drawCheckbox(42, 173, formData.tipoBem?.imovel);
-    doc.text('IMÓVEL', 46, 176);
-    drawCheckbox(67, 173, formData.tipoBem?.auto);
-    doc.text('AUTO', 71, 176);
-    drawCheckbox(92, 173, formData.tipoBem?.pesados);
-    doc.text('PESADOS', 96, 176);
+    // drawCheckbox(42, 173, formData.tipoBem?.imovel);
+    // doc.text('IMÓVEL', 46, 176);
+    // drawCheckbox(67, 173, formData.tipoBem?.auto);
+    // doc.text('AUTO', 71, 176);
+    // drawCheckbox(92, 173, formData.tipoBem?.pesados);
+    // doc.text('PESADOS', 96, 176);
     
     // Ajustar a posição do valor 'R$ 500.000,00' para afastá-lo do texto 'Valor do Bem'
     doc.text('Valor do bem', 125, 176);
-    doc.text(formData.valorBem ? formatCurrency(formData.valorBem) : '', 150, 176);
+    doc.text(formData.valor_bem ? formatCurrency(formData.valor_bem) : '', 150, 176);
     
     // Entrada e Parcelas
     doc.text('Entrada', 12, 183);
-    doc.text(formData.entrada ? formatCurrency(formData.entrada) : '', 42, 183);
+    doc.text(formData.valor_entrada ? formatCurrency(formData.valor_entrada) : '', 42, 183);
     // Remover a exibição duplicada do valor da parcela
     // doc.text(formData.prazo || '', 152, 183);
     
@@ -603,8 +597,8 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
   };
 
   const calcularParcela = () => {
-    if (!formData.valorBem || !formData.entrada || !formData.prazo) return '0,00';
-    const valorFinanciado = parseFloat(formData.valorBem.replace(/\D/g, '')) - parseFloat(formData.entrada.replace(/\D/g, ''));
+    if (!formData.valor_bem || !formData.valor_entrada || !formData.prazo) return '0,00';
+    const valorFinanciado = parseFloat(formData.valor_bem.replace(/\D/g, '')) - parseFloat(formData.valor_entrada.replace(/\D/g, ''));
     const parcela = valorFinanciado / parseInt(formData.prazo);
     return parcela.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
@@ -679,7 +673,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
                         <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left border border-gray-300 dark:border-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm">
                           <Combobox.Input
                             className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 dark:text-gray-100 bg-transparent focus:ring-0"
-                            displayValue={(simulacao: Simulacao | null) => 
+                            displayValue={(simulacao: Credito | null) => 
                               simulacao ? `${simulacao.nome_cliente} - ${simulacao.numero || ''}` : ''
                             }
                             onChange={(event) => setQuery(event.target.value)}
@@ -779,9 +773,9 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
                         />
                         <input
                           type="text"
-                          name="orgaoEmissor"
+                          name="orgao_emissor"
                           placeholder="Org. Em"
-                          value={formData.orgaoEmissor}
+                          value={formData.orgao_emissor}
                           onChange={handleInputChange}
                           className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
@@ -809,9 +803,9 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
                       <div className="grid grid-cols-2 gap-4">
                         <input
                           type="text"
-                          name="estadoCivil"
+                          name="estado_civil"
                           placeholder="Estado Civil"
-                          value={formData.estadoCivil}
+                          value={formData.estado_civil}
                           onChange={handleInputChange}
                           className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
@@ -827,18 +821,18 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
 
                       <input
                         type="text"
-                        name="filiacaoMaterna"
+                        name="filiacao_materna"
                         placeholder="Filiação Materna"
-                        value={formData.filiacaoMaterna}
+                        value={formData.filiacao_materna}
                         onChange={handleInputChange}
                         className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                       />
 
                       <input
                         type="text"
-                        name="filiacaoPaterna"
+                        name="filiacao_paterna"
                         placeholder="Filiação Paterna"
-                        value={formData.filiacaoPaterna}
+                        value={formData.filiacao_paterna}
                         onChange={handleInputChange}
                         className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                       />
@@ -897,9 +891,9 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
                         />
                         <input
                           type="text"
-                          name="cidadeUF"
+                          name="cidade_uf"
                           placeholder="Cidade/UF"
-                          value={formData.cidadeUF}
+                          value={formData.cidade_uf}
                           onChange={handleInputChange}
                           className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
@@ -960,25 +954,25 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
                       />
                       <input
                         type="text"
-                        name="rendaIndividual"
+                        name="renda_individual"
                         placeholder="Renda Individual"
-                        value={formData.rendaIndividual}
+                        value={formData.renda_individual}
                         onChange={handleInputChange}
                         className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                       />
                       <input
                         type="text"
-                        name="rendaFamiliar"
+                        name="renda_familiar"
                         placeholder="Renda Familiar"
-                        value={formData.rendaFamiliar}
+                        value={formData.renda_familiar}
                         onChange={handleInputChange}
                         className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                       />
                       <input
                         type="text"
-                        name="pontScore"
+                        name="pont_score"
                         placeholder="Pont. Score"
-                        value={formData.pontScore}
+                        value={formData.pont_score}
                         onChange={handleInputChange}
                         className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                       />
@@ -1006,7 +1000,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
                     <div className="grid grid-cols-1 gap-4">
                       {/* Tipo do Bem */}
                       <div className="flex justify-start gap-8">
-                        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        {/* <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                           <input
                             type="checkbox"
                             name="tipoBem.imovel"
@@ -1035,23 +1029,23 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
                             className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                           />
                           <span>PESADOS</span>
-                        </label>
+                        </label> */}
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 w-[800px]">
                         <input
                           type="text"
-                          name="valorBem"
+                          name="valor_bem"
                           placeholder="R$ 0,00"
-                          value={formData.valorBem}
+                          value={formData.valor_bem}
                           onChange={handleInputChange}
                           className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />
                         <input
                           type="text"
-                          name="entrada"
+                          name="valor_entrada"
                           placeholder="R$ 0,00"
-                          value={formData.entrada}
+                          value={formData.valor_entrada}
                           onChange={handleInputChange}
                           className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
                         />

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { Simulacao, SimulacaoStatus } from '@/types/simulacao'
+import { Credito } from '@/types/credito'
 
 // Use o domínio base do Supabase
 const supabaseUrl = 'https://qkimxruewcensbnfllvv.supabase.co'
@@ -256,23 +257,27 @@ export const DocumentosAPI = {
 
 export const CreditosAPI = {
   // Criar nova ficha de crédito
-  async criar(credito: any) {
+  async criar(credito: Omit<Credito, 'id' | 'created_at' | 'updated_at' | 'status' | 'user_id'>): Promise<{ data: Credito | null; error: any }> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
       const { data, error } = await supabase
         .from('creditos')
         .insert([{
           nome: credito.nome,
           cpf: credito.cpf,
           rg: credito.rg,
-          orgao_emissor: credito.orgaoEmissor,
-          data_nascimento: credito.dataNascimento,
+          orgao_emissor: credito.orgao_emissor,
+          data_nascimento: credito.data_nascimento,
           naturalidade: credito.naturalidade,
-          estado_civil: credito.estadoCivil,
+          estado_civil: credito.estado_civil,
           conjuge: credito.conjuge,
-          filiacao_materna: credito.filiacaoMaterna,
-          filiacao_paterna: credito.filiacaoPaterna,
+          filiacao_materna: credito.filiacao_materna,
+          filiacao_paterna: credito.filiacao_paterna,
           
           // Endereço
           endereco: credito.endereco,
@@ -280,7 +285,7 @@ export const CreditosAPI = {
           complemento: credito.complemento || '',
           bairro: credito.bairro,
           cep: credito.cep,
-          cidade_uf: credito.cidadeUF,
+          cidade_uf: credito.cidade_uf,
           
           // Contato
           telefone1: credito.telefone1,
@@ -290,25 +295,25 @@ export const CreditosAPI = {
           // Profissão e Renda
           profissao: credito.profissao,
           empresa: credito.empresa,
-          renda_individual: parseFloat(credito.rendaIndividual?.replace(/[^\d,]/g, '').replace(',', '.')) || 0,
-          renda_familiar: parseFloat(credito.rendaFamiliar?.replace(/[^\d,]/g, '').replace(',', '.')) || 0,
-          pont_score: parseFloat(credito.pontScore) || 0,
-          restricao: credito.restricao || false,
+          renda_individual: credito.renda_individual,
+          renda_familiar: credito.renda_familiar,
+          pont_score: credito.pont_score,
+          restricao: credito.restricao,
           
           // Dados do Bem
-          tipo_bem: credito.tipoBem ? (Object.keys(credito.tipoBem).find(key => credito.tipoBem[key]) || '') : '',
-          valor_bem: parseFloat(credito.valorBem?.replace(/[^\d,]/g, '').replace(',', '.')) || 0,
-          valor_entrada: parseFloat(credito.entrada?.replace(/[^\d,]/g, '').replace(',', '.')) || 0,
-          prazo: parseInt(credito.prazo) || 240,
-          reducao: credito.reducao || false,
+          tipo_bem: credito.tipo_bem,
+          valor_bem: credito.valor_bem,
+          valor_entrada: credito.valor_entrada,
+          prazo: credito.prazo,
+          reducao: credito.reducao,
           
           // Dados do Consultor
           consultor: credito.consultor,
           filial: credito.filial,
           
           // Sistema
-          status: 'Em Análise',
-          user_id: user?.id
+          status: 'Em Análise' as const,
+          user_id: user.id
         }])
         .select()
         .single();
