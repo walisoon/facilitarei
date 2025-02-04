@@ -24,7 +24,7 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password);
-      router.push('/');
+      // O redirecionamento será feito pelo AuthContext
     } catch (error: any) {
       console.error('Erro no login:', error);
       if (error.message === 'Invalid login credentials') {

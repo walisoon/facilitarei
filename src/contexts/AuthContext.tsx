@@ -62,7 +62,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (data.user) {
         console.log('Login bem sucedido:', data.user.email);
+        // Primeiro atualiza o estado
+        setUser(data.user);
+        // Depois redireciona
         router.push('/creditos');
+        // Força um refresh da página para garantir que tudo está atualizado
+        router.refresh();
       }
     } catch (error) {
       console.error('Erro no login:', error);
