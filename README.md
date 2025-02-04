@@ -1,6 +1,6 @@
-# Sistema Facilita
+# Facilita
 
-Sistema de gestão de crédito desenvolvido para facilitar o processo de análise e aprovação de crédito.
+Sistema de gestão de crédito imobiliário.
 
 ## Tecnologias
 
@@ -13,10 +13,10 @@ Sistema de gestão de crédito desenvolvido para facilitar o processo de anális
 
 O sistema está hospedado no Netlify e usa o Supabase como backend.
 
+Last deploy: 2025-02-04T01:40:00-04:00
+
 ## Última atualização
 
 - Adicionado enum para status de simulação
 - Melhorada a tipagem do sistema
 - Corrigidos bugs de tipagem no TypeScript
-
-*Deploy forçado em: 04/02/2025*
