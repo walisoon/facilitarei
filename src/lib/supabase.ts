@@ -15,8 +15,28 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
-  }
+    detectSessionInUrl: true,
+    flowType: 'pkce',
+    storage: {
+      getItem: (key) => {
+        if (typeof window === 'undefined') return null
+        return window.localStorage.getItem(key)
+      },
+      setItem: (key, value) => {
+        if (typeof window === 'undefined') return
+        window.localStorage.setItem(key, value)
+      },
+      removeItem: (key) => {
+        if (typeof window === 'undefined') return
+        window.localStorage.removeItem(key)
+      },
+    },
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'facilitarei@1.0.0',
+    },
+  },
 })
 
 // Tipos para usuários

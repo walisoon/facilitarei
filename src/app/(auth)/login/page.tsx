@@ -1,111 +1,119 @@
 'use client';
 
-import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { AuthError } from '@supabase/supabase-js';
 import Link from 'next/link';
-import Image from 'next/image';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const { signIn } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const { signIn, user } = useAuth();
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    
-    if (!email || !password) {
-      setError('Por favor, preencha todos os campos.');
-      return;
+  useEffect(() => {
+    if (user) {
+      router.push('/creditos');
     }
+  }, [user, router]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
     try {
-      await signIn(email, password);
-      // O redirecionamento será feito pelo AuthContext
-    } catch (error: any) {
-      console.error('Erro no login:', error);
-      if (error.message === 'Invalid login credentials') {
-        setError('Email ou senha incorretos.');
-      } else if (error.message?.includes('network')) {
-        setError('Erro de conexão. Por favor, verifique sua internet.');
-      } else {
-        setError('Falha no login. Por favor, tente novamente.');
+      if (!email || !password) {
+        throw new Error('Por favor, preencha todos os campos');
       }
+
+      await signIn(email, password);
+    } catch (err) {
+      console.error('Erro no login:', err);
+      let message = 'Ocorreu um erro ao fazer login. Por favor, tente novamente.';
+
+      if (err instanceof AuthError) {
+        switch (err.message) {
+          case 'Invalid login credentials':
+            message = 'Email ou senha incorretos';
+            break;
+          case 'Email not confirmed':
+            message = 'Por favor, confirme seu email antes de fazer login';
+            break;
+          case 'Request rate limit reached':
+            message = 'Muitas tentativas. Por favor, aguarde um momento e tente novamente';
+            break;
+          default:
+            if (err.message.includes('rate limit')) {
+              message = 'Muitas tentativas. Por favor, aguarde um momento e tente novamente';
+            }
+        }
+      }
+
+      setError(message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
-        <div className="flex flex-col items-center space-y-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-10 h-10 text-white"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                />
-              </svg>
-            </div>
-            <div className="flex flex-col">
-              <h1 className="text-3xl font-bold text-black">
-                Facilita Cred
-              </h1>
-              <span className="text-gray-500 text-lg">
-                Correspondente Bancário
-              </span>
-            </div>
+    <div className="flex min-h-screen flex-1 flex-col justify-center px-6 py-12 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+        <img
+          className="mx-auto h-20 w-auto"
+          src="/logo.svg"
+          alt="Facilita Cred"
+        />
+        <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
+          Entrar no Sistema
+        </h2>
+      </div>
+
+      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+        {error && (
+          <div className="mb-4 p-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
+            {error}
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            Entrar no Sistema
-          </h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{error}</div>
-            </div>
-          )}
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email
-              </label>
+        )}
+
+        <form className="space-y-6" onSubmit={handleLogin}>
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
+              Email
+            </label>
+            <div className="mt-2">
               <input
                 id="email"
                 name="email"
                 type="email"
+                autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
-                placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-orange-600 sm:text-sm sm:leading-6"
               />
             </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between">
+              <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
                 Senha
               </label>
+            </div>
+            <div className="mt-2">
               <input
                 id="password"
                 name="password"
                 type="password"
+                autoComplete="current-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
-                placeholder="Senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-orange-600 sm:text-sm sm:leading-6"
               />
             </div>
           </div>
@@ -113,18 +121,20 @@ export default function LoginPage() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+              disabled={loading}
+              className={`flex w-full justify-center rounded-md bg-orange-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              Entrar
+              {loading ? 'Entrando...' : 'Entrar'}
             </button>
           </div>
-
-          <div className="text-sm text-center">
-            <Link href="/signup" className="font-medium text-orange-600 hover:text-orange-500">
-              Não tem uma conta? Registre-se
-            </Link>
-          </div>
         </form>
+
+        <p className="mt-10 text-center text-sm text-gray-500">
+          Não tem uma conta?{' '}
+          <Link href="/signup" className="font-semibold leading-6 text-orange-600 hover:text-orange-500">
+            Registre-se
+          </Link>
+        </p>
       </div>
     </div>
   );
