@@ -16,7 +16,31 @@ interface Ficha {
   data_nascimento: string;
   estado_civil: string;
   naturalidade: string;
-  [key: string]: any; // para outras propriedades que possam existir
+  orgao_emissor?: string;
+  numero_simulacao?: string;
+  conjuge?: string;
+  filiacao_materna?: string;
+  filiacao_paterna?: string;
+  endereco?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cep?: string;
+  cidade_uf?: string;
+  telefone1?: string;
+  telefone2?: string;
+  email?: string;
+  profissao?: string;
+  empresa?: string;
+  renda_individual?: number;
+  restricao?: number;
+  tipo_bem?: 'imovel' | 'auto' | 'pesados';
+  valor_bem?: number;
+  valor_entrada?: number;
+  reducao?: number;
+  prazo?: number;
+  consultor?: string;
+  filial?: string;
 }
 
 export default function CreditosPage() {
@@ -203,24 +227,14 @@ export default function CreditosPage() {
     doc.text(ficha.filial || '', 152, 204);
     
     // Texto de autorização
-    doc.setFontSize(5);
-    doc.setTextColor(80); 
-    
-    // Adicionar uma linha fina acima do termo
-    const lineY = 210; 
-    doc.setDrawColor(0); 
-    doc.setLineWidth(0.1); 
-    doc.line(10, lineY, 200, lineY); 
-    
-    // Texto de autorização
-    const texto = 'Autorizo o envio deste formulário para solicitação de vaga e análise cadastral para as condições a mim apresentadas. Sabendo que no caso de aprovação, se optar por não ' +
+    const texto: string = 'Autorizo o envio deste formulário para solicitação de vaga e análise cadastral para as condições a mim apresentadas. Sabendo que no caso de aprovação, se optar por não ' +
                   'dar continuidade no processo e nas condições aprovadas, poderei ficar restrito dentro do sistema de análise desta instituição durante o período de noventa dias, podendo ' +
                   'fazer outra oferta apenas após o periodo de restrição. Todas as propostas são fiscalizadas e autorizadas pelo BACEN e regulamentados pela Lei Federal 11.795/08.';
     
-    const splitText = doc.splitTextToSize(texto, 180); 
-    const textX = (pageWidth - doc.getTextWidth(splitText[0])) / 2; 
+    const splitText: string[] = doc.splitTextToSize(texto, 180); 
+    const textX: number = (pageWidth - doc.getTextWidth(splitText[0])) / 2; 
 
-    splitText.forEach((line, index) => {
+    splitText.forEach((line: string, index: number) => {
       doc.text(line, textX, 215 + (index * 5), { align: 'justify' }); 
     });
     
