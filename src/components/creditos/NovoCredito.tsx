@@ -565,7 +565,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
     const textX = (pageWidth - doc.getTextWidth(splitText[0])) / 2; 
 
     // Adiciona o texto quebrado
-    splitText.forEach((line, index) => {
+    splitText.forEach((line: string, index: number) => {
       doc.text(line, textX, 215 + (index * 5), { align: 'justify' }); 
     });
     
