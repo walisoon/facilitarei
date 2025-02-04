@@ -42,6 +42,7 @@ interface Ficha {
   prazo?: number;
   consultor?: string;
   filial?: string;
+  status?: string;
 }
 
 export default function CreditosPage() {
@@ -49,6 +50,7 @@ export default function CreditosPage() {
   const [fichas, setFichas] = useState<Ficha[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFicha, setSelectedFicha] = useState<Ficha | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   const handleViewPDF = (ficha: Ficha) => {
     const doc = new jsPDF();
@@ -343,6 +345,8 @@ export default function CreditosPage() {
               type="text"
               name="search"
               id="search"
+              value={searchTerm}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
               className="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 dark:text-white ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-orange-600 dark:focus:ring-orange-500 sm:text-sm sm:leading-6 bg-white dark:bg-gray-700"
               placeholder="Buscar fichas..."
             />
@@ -389,7 +393,10 @@ export default function CreditosPage() {
                     {ficha.prazo}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    {((ficha.valor_entrada / ficha.valor_bem) * 100).toFixed(2)}%
+                    {ficha.valor_entrada && ficha.valor_bem ? 
+                      ((ficha.valor_entrada / ficha.valor_bem) * 100).toFixed(2) + '%' : 
+                      '0%'
+                    }
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
