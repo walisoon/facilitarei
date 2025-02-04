@@ -14,6 +14,13 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
+    if (!email || !password) {
+      setError('Por favor, preencha todos os campos.');
+      return;
+    }
+
     try {
       await signUp(email, password);
       setError('Conta criada com sucesso! Verifique seu email para confirmar o registro.');
@@ -21,7 +28,18 @@ export default function SignUpPage() {
         router.push('/login');
       }, 3000);
     } catch (error: any) {
-      setError(error.message || 'Erro ao criar conta.');
+      console.error('Erro no signup:', error);
+      if (error.message?.includes('network')) {
+        setError('Erro de conexão. Por favor, verifique sua internet e tente novamente.');
+      } else if (error.message?.includes('already registered')) {
+        setError('Este email já está registrado. Por favor, faça login.');
+      } else if (error.message?.includes('invalid email')) {
+        setError('Email inválido. Por favor, use um email válido.');
+      } else if (error.message?.includes('password')) {
+        setError('Senha muito fraca. Use pelo menos 6 caracteres.');
+      } else {
+        setError('Erro ao criar conta. Por favor, tente novamente.');
+      }
     }
   };
 

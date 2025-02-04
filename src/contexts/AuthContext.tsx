@@ -19,10 +19,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
-  );
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Variáveis de ambiente do Supabase não configuradas:', {
+      url: supabaseUrl ? 'configurada' : 'faltando',
+      key: supabaseAnonKey ? 'configurada' : 'faltando'
+    });
+    throw new Error('Configuração do Supabase incompleta');
+  }
+
+  const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
   useEffect(() => {
     const getSession = async () => {
@@ -74,12 +83,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`
+        }
+      });
 
-    if (error) throw error;
+      if (error) {
+        console.error('Erro no signup:', error);
+        throw error;
+      }
+
+      if (data.user) {
+        console.log('Signup bem sucedido:', data.user.email);
+      }
+    } catch (error) {
+      console.error('Erro no signup:', error);
+      throw error;
+    }
   };
 
   const signOut = async () => {
