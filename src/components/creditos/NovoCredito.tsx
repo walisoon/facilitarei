@@ -216,93 +216,79 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    try {
-      console.log('Iniciando submit...', formData);
-      console.log('Tipo dos campos:', {
-        valor_bem: typeof formData.valor_bem,
-        valor_entrada: typeof formData.valor_entrada,
-        prazo: typeof formData.prazo,
-        renda_individual: typeof formData.renda_individual,
-        renda_familiar: typeof formData.renda_familiar,
-        pont_score: typeof formData.pont_score,
-        reducao: typeof formData.reducao,
-        restricao: typeof formData.restricao
-      });
 
+    try {
       // Validar campos obrigatórios
       const requiredFields = [
         'nome',
         'cpf',
-        'rg',
-        'orgao_emissor',
         'data_nascimento',
-        'naturalidade',
-        'estado_civil'
-      ];
+        'telefone1',
+        'email',
+        'profissao',
+        'empresa',
+        'renda_individual',
+        'tipo_bem',
+        'valor_bem',
+        'valor_entrada',
+        'prazo'
+      ] as const;
 
-      const missingFields = requiredFields.filter(field => !formData[field]);
+      const missingFields = requiredFields.filter(field => !formData[field as keyof FormData]);
       console.log('Campos faltando:', missingFields);
       
       if (missingFields.length > 0) {
-        toast.error(`Por favor, preencha todos os campos obrigatórios: ${missingFields.join(', ')}`);
+        toast.error(`Por favor, preencha os campos obrigatórios: ${missingFields.join(', ')}`);
         return;
       }
 
-      console.log('Tentando salvar ficha...');
-      let result;
-      
-      const creditoData = {
-        nome: formData.nome,
-        cpf: formData.cpf,
-        rg: formData.rg,
-        orgao_emissor: formData.orgao_emissor,
-        data_nascimento: formData.data_nascimento,
-        naturalidade: formData.naturalidade,
-        estado_civil: formData.estado_civil,
-        conjuge: formData.conjuge,
-        filiacao_materna: formData.filiacao_materna,
-        filiacao_paterna: formData.filiacao_paterna,
-        endereco: formData.endereco,
-        numero: formData.numero,
-        complemento: formData.complemento,
-        bairro: formData.bairro,
-        cep: formData.cep,
-        cidade_uf: formData.cidade_uf,
-        telefone1: formData.telefone1,
-        telefone2: formData.telefone2,
-        email: formData.email,
-        profissao: formData.profissao,
-        empresa: formData.empresa,
-        renda_individual: parseFloat(formData.renda_individual.replace(/[^\d,]/g, '').replace(',', '.')),
-        renda_familiar: parseFloat(formData.renda_familiar.replace(/[^\d,]/g, '').replace(',', '.')),
-        pont_score: parseFloat(formData.pont_score),
-        tipo_bem: formData.tipo_bem,
-        valor_bem: parseFloat(formData.valor_bem.replace(/[^\d,]/g, '').replace(',', '.')),
-        valor_entrada: parseFloat(formData.valor_entrada.replace(/[^\d,]/g, '').replace(',', '.')),
-        prazo: parseInt(formData.prazo),
-        reducao: formData.reducao,
-        consultor: formData.consultor,
-        filial: formData.filial,
-        restricao: formData.restricao
+      // Converter campos numéricos
+      const numericFields = {
+        renda_individual: parseFloat(formData.renda_individual),
+        valor_bem: parseFloat(formData.valor_bem),
+        valor_entrada: parseFloat(formData.valor_entrada),
+        prazo: parseInt(formData.prazo)
       };
-      
+
+      // Validar campos numéricos
+      for (const [field, value] of Object.entries(numericFields)) {
+        if (isNaN(value)) {
+          toast.error(`O campo ${field} deve ser um número válido`);
+          return;
+        }
+      }
+
+      // Criar objeto com os dados convertidos
+      const data: Credito = {
+        ...formData,
+        ...numericFields,
+        restricao: Boolean(formData.restricao)
+      };
+
       if (creditoParaEditar) {
         // Atualizar ficha existente
-        result = await CreditosAPI.atualizar(creditoParaEditar.id.toString(), creditoData);
+        const result = await CreditosAPI.atualizar(creditoParaEditar.id.toString(), data);
+        const { data: resultData, error } = result;
+        console.log('Resposta da API:', { data: resultData, error });
+        
+        if (error) {
+          throw error;
+        }
+
+        toast.success('Ficha atualizada com sucesso!');
       } else {
         // Criar nova ficha
-        result = await CreditosAPI.criar(creditoData);
+        const result = await CreditosAPI.criar(data);
+        const { data: resultData, error } = result;
+        console.log('Resposta da API:', { data: resultData, error });
+        
+        if (error) {
+          throw error;
+        }
+
+        toast.success('Ficha criada com sucesso!');
       }
 
-      const { data, error } = result;
-      console.log('Resposta da API:', { data, error });
-      
-      if (error) {
-        throw error;
-      }
-
-      toast.success(creditoParaEditar ? 'Ficha atualizada com sucesso!' : 'Ficha criada com sucesso!');
       onSuccess?.();
       onClose();
     } catch (error) {
