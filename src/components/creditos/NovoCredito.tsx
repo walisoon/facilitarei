@@ -621,7 +621,7 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
                                       >
                                         {simulacao.nome} - {simulacao.numero || ''} 
                                         <span className="ml-2 text-sm opacity-75">
-                                          (R$ {simulacao.valor_emprestimo?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                                          (R$ {simulacao.valor_bem?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
                                         </span>
                                       </span>
                                       {selected ? (
