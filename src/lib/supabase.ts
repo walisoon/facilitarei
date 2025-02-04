@@ -368,5 +368,20 @@ export const CreditosAPI = {
       console.error('Erro ao atualizar status:', error);
       return { data: null, error };
     }
+  },
+
+  // Excluir ficha de crédito
+  async excluir(id: string) {
+    try {
+      const { data, error } = await supabase
+        .from('creditos')
+        .delete()
+        .eq('id', id);
+
+      if (error) return { data: null, error };
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
   }
 };
