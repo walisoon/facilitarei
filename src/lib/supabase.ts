@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { Simulacao } from '@/types/simulacao'
+import { Simulacao, SimulacaoStatus } from '@/types/simulacao'
 
 // Use o domínio base do Supabase
 const supabaseUrl = 'https://qkimxruewcensbnfllvv.supabase.co'
@@ -353,7 +353,7 @@ export const CreditosAPI = {
   },
 
   // Atualizar status da ficha
-  async atualizarStatus(id: number, status: string) {
+  async atualizarStatus(id: number, status: SimulacaoStatus) {
     try {
       const { data, error } = await supabase
         .from('creditos')
