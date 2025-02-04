@@ -30,47 +30,38 @@ export default function CreditosPage() {
 
   const handleViewPDF = (ficha: Ficha) => {
     const doc = new jsPDF();
-    const pageWidth: number = doc.internal.pageSize.width;
-    
-    // Adiciona logo e informações do cabeçalho
-    doc.addImage('/images/logo.png', 'PNG', pageWidth - 50, 10, 40, 20);
-    
-    // Informações da empresa (lado esquerdo)
-    doc.setFontSize(8);
-    doc.text('FACILITA CRED - CORRESPONDENTE BANCÁRIO AUTORIZADO', 10, 15);
-    doc.text('Rua das Pitangueiras, Nº 274 - Setor Comercial - MT', 10, 20);
-    doc.text('Contato: (11) 5152-5823 ou (66) 9.9207-3183 - WWW.FACILITACREDSINOP.COM.BR', 10, 25);
-    
-    // Adicionar uma linha fina acima da data
-    const dateLineY = 31; 
-    doc.setDrawColor(0); 
-    doc.setLineWidth(0.1); 
-    doc.line(10, dateLineY, 200, dateLineY); 
-    
-    // Data
-    doc.setFontSize(10);
-    doc.text('Data', 12, 40);
-    doc.text(new Date().toLocaleDateString('pt-BR'), 32, 40);
-    
+
     // Função para desenhar título de seção
     const drawSectionTitle = (title: string, y: number) => {
-      doc.setDrawColor(255, 230, 210); 
-      doc.rect(10, y, pageWidth - 20, 7);
-      doc.setFillColor(255, 236, 217);
-      doc.rect(10, y, pageWidth - 20, 7, 'F');
-      doc.text(title, 12, y + 5);
+      doc.setFillColor(240, 240, 240);
+      doc.rect(10, y - 4, 190, 6, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text(title, 12, y);
+      doc.setFont('helvetica', 'normal');
     };
-    
+
+    // Cabeçalho
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('FICHA CADASTRAL', 105, 20, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+
+    // Data
+    const currentDate = new Date().toLocaleDateString('pt-BR');
+    doc.text(`Data: ${currentDate}`, 10, 30);
+
     // Dados Pessoais
-    drawSectionTitle('Dados Pessoais', 45);
+    drawSectionTitle('Dados Pessoais', 43);
+
+    // Nome
+    doc.text('Nome', 12, 50);
+    doc.text(ficha.nome || '', 42, 50);
     
-    // Nome e CPF
-    doc.text('Nome', 12, 57);
-    doc.text(ficha.nome || '', 42, 57);
-    
-    // Número da Simulação
-    doc.text('Nº Prosposta', 122, 57);
-    doc.text(ficha.numero_simulacao || '', 152, 57);
+    // Número da Proposta (usando id em vez de numero_simulacao)
+    doc.text('Nº Proposta', 122, 57);
+    doc.text(ficha.id?.toString() || '', 152, 57);
     
     // RG e CPF
     doc.text('RG', 12, 64);
@@ -78,7 +69,7 @@ export default function CreditosPage() {
     doc.text('CPF', 122, 64);
     doc.text(ficha.cpf || '', 152, 64);
     
-    // Data Nasc. e Naturalidade
+    // Data de Nascimento e Naturalidade
     doc.text('Data Nasc.', 12, 71);
     doc.text(ficha.data_nascimento || '', 42, 71);
     doc.text('Naturalidade', 122, 71);
@@ -98,40 +89,36 @@ export default function CreditosPage() {
     doc.text(ficha.filiacao_paterna || '', 42, 92);
     
     // Endereço
-    drawSectionTitle('Endereço', 94);
+    drawSectionTitle('Endereço', 99);
     
     doc.text('Endereço', 12, 106);
     doc.text(ficha.endereco || '', 42, 106);
-    doc.text('Nº', 122, 106);
+    doc.text('Número', 122, 106);
     doc.text(ficha.numero || '', 152, 106);
     
-    // Complemento e Bairro
     doc.text('Complemento', 12, 113);
     doc.text(ficha.complemento || '', 42, 113);
     doc.text('Bairro', 122, 113);
     doc.text(ficha.bairro || '', 152, 113);
     
-    // CEP e Cidade/UF
     doc.text('CEP', 12, 120);
     doc.text(ficha.cep || '', 42, 120);
     doc.text('Cidade/UF', 122, 120);
     doc.text(ficha.cidade_uf || '', 152, 120);
     
     // Contato
-    drawSectionTitle('Contato', 122);
+    drawSectionTitle('Contato', 127);
     
-    // Telefones
-    doc.text('Telefone 01', 12, 134);
+    doc.text('Telefone 1', 12, 134);
     doc.text(ficha.telefone1 || '', 42, 134);
-    doc.text('Telefone 02', 122, 134);
+    doc.text('Telefone 2', 122, 134);
     doc.text(ficha.telefone2 || '', 152, 134);
     
-    // Email
     doc.text('E-mail', 12, 141);
     doc.text(ficha.email || '', 42, 141);
     
-    // Profissão
-    drawSectionTitle('Profissão', 143);
+    // Profissional
+    drawSectionTitle('Profissional', 148);
     
     doc.text('Profissão', 12, 155);
     doc.text(ficha.profissao || '', 42, 155);
@@ -140,116 +127,38 @@ export default function CreditosPage() {
     
     // Renda
     doc.text('Renda Indiv.', 12, 162);
-    doc.text(ficha.renda_individual ? `R$ ${ficha.renda_individual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '', 42, 162);
+    doc.text(`R$ ${ficha.renda_individual?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}`, 42, 162);
     doc.text('Restrição', 122, 162);
-    
-    // Função para desenhar checkbox com visto
-    const drawCheckbox = (x: number, y: number, checked: boolean) => {
-      doc.setDrawColor(0);
-      doc.rect(x, y, 3, 3);
-      
-      if (checked) {
-        doc.setLineWidth(0.1);
-        doc.line(x + 0.5, y + 1.5, x + 1.2, y + 2.2);
-        doc.line(x + 1.2, y + 2.2, x + 2.5, y + 0.8);
-      }
-    };
-    
-    // Checkboxes para restrição
-    drawCheckbox(152, 159, ficha.restricao === 1);
-    doc.setFontSize(8);  
-    doc.text('SIM', 156, 162);
-    drawCheckbox(167, 159, ficha.restricao === 0);
-    doc.text('NÃO', 171, 162);
+    doc.text(ficha.restricao ? 'Sim' : 'Não', 152, 162);
     
     // Dados do Bem
-    drawSectionTitle('Dados do Bem', 164);
+    drawSectionTitle('Dados do Bem', 169);
     
-    // Tipo do bem
-    doc.text('Tipo do bem', 12, 176);
+    doc.text('Tipo do Bem', 12, 176);
+    doc.text(ficha.tipo_bem || '', 42, 176);
+    doc.text('Valor do Bem', 122, 176);
+    doc.text(`R$ ${ficha.valor_bem?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}`, 152, 176);
     
-    // Checkboxes para tipo do bem
-    drawCheckbox(42, 173, ficha.tipo_bem === 'imovel');
-    doc.text('IMÓVEL', 46, 176);
-    drawCheckbox(67, 173, ficha.tipo_bem === 'auto');
-    doc.text('AUTO', 71, 176);
-    drawCheckbox(92, 173, ficha.tipo_bem === 'pesados');
-    doc.text('PESADOS', 96, 176);
-    
-    // Valor do bem
-    doc.text('Valor do bem', 125, 176);
-    doc.text(ficha.valor_bem ? `R$ ${ficha.valor_bem.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '', 150, 176);
-    
-    // Entrada e Parcelas
     doc.text('Entrada', 12, 183);
-    doc.text(ficha.valor_entrada ? `R$ ${ficha.valor_entrada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '', 42, 183);
+    doc.text(`R$ ${ficha.valor_entrada?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}`, 42, 183);
+    doc.text('Prazo', 122, 183);
+    doc.text(`${ficha.prazo || ''} meses`, 152, 183);
     
-    // Redução
-    doc.text('Redução', 12, 190);
+    // Consultor
+    drawSectionTitle('Consultor', 190);
     
-    // Checkboxes para redução
-    drawCheckbox(42, 187, ficha.reducao === 1);
-    doc.text('SIM', 46, 190);
-    drawCheckbox(57, 187, ficha.reducao === 0);
-    doc.text('NÃO', 61, 190);
+    doc.text('Nome', 12, 197);
+    doc.text(ficha.consultor || '', 42, 197);
+    doc.text('Filial', 122, 197);
+    doc.text(ficha.filial || '', 152, 197);
     
-    // Prazo
-    doc.text('Prazo', 82, 190);
-    doc.text(ficha.prazo?.toString() || '240', 102, 190);
+    // Status
+    drawSectionTitle('Status', 204);
+    doc.text('Situação', 12, 211);
+    doc.text(ficha.status || '', 42, 211);
     
-    // Dados do Consultor
-    drawSectionTitle('Dados do Consultor', 192);
-    
-    doc.text('Consultor', 12, 204);
-    doc.text(ficha.consultor || '', 42, 204);
-    doc.text('Filial', 122, 204);
-    doc.text(ficha.filial || '', 152, 204);
-    
-    // Texto de autorização
-    const texto: string = 'Autorizo o envio deste formulário para solicitação de vaga e análise cadastral para as condições a mim apresentadas. Sabendo que no caso de aprovação, se optar por não ' +
-                  'dar continuidade no processo e nas condições aprovadas, poderei ficar restrito dentro do sistema de análise desta instituição durante o período de noventa dias, podendo ' +
-                  'fazer outra oferta apenas após o periodo de restrição. Todas as propostas são fiscalizadas e autorizadas pelo BACEN e regulamentados pela Lei Federal 11.795/08.';
-    
-    const splitText: string[] = doc.splitTextToSize(texto, 180); 
-    const textX: number = (pageWidth - doc.getTextWidth(splitText[0])) / 2; 
-
-    splitText.forEach((line: string, index: number) => {
-      doc.text(line, textX, 215 + (index * 5), { align: 'justify' }); 
-    });
-    
-    // Linhas para assinatura
-    doc.setDrawColor(200, 200, 200); 
-    doc.setFontSize(10); 
-    
-    doc.line(10, 245, 90, 245);
-    doc.text('Solicitante', 40, 250);
-    
-    doc.line(110, 245, 190, 245);
-    doc.text('Consultor Responsável', 135, 250);
-
-    // Aplicando marca d'água
-    const img = new Image();
-    img.src = '/images/watermark.png';
-    img.onload = () => {
-      const pageHeight: number = doc.internal.pageSize.height;
-      const imgWidth: number = 170;
-      const imgHeight: number = 125;
-      const x: number = (pageWidth - imgWidth) / 2;
-      const y: number = (pageHeight - imgHeight) / 2;
-
-      // Criando um novo estado gráfico com opacidade
-      const opacity = 0.08;
-      doc.saveGraphicsState();
-      doc.setGState({ opacity });
-      doc.addImage(img, 'PNG', x, y, imgWidth, imgHeight);
-      doc.restoreGraphicsState();
-
-      // Salvar o PDF
-      const nomeArquivo: string = ficha.nome ? 
-        `${ficha.nome.toLowerCase().replace(/\s+/g, '-')}-ficha-cadastral.pdf` : 
-        'ficha-cadastral.pdf';
-      doc.save(nomeArquivo);
-    };
+    // Salvar o PDF
+    doc.save(`ficha-${ficha.nome?.toLowerCase().replace(/\s+/g, '-')}.pdf`);
   };
 
   const loadFichas = async () => {
