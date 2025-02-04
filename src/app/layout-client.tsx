@@ -7,6 +7,7 @@ import { SidebarProvider, useSidebar } from '@/contexts/sidebar-context'
 import { PageProvider } from '@/contexts/page-context'
 import { ThemeProvider } from '@/contexts/theme-context'
 import { cn } from '@/lib/utils'
+import { usePathname } from 'next/navigation';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -40,6 +41,13 @@ export function ClientLayout({
 }: {
   children: React.ReactNode
 }) {
+  const pathname = usePathname();
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
+
+  if (isAuthPage) {
+    return <>{children}</>;
+  }
+
   return (
     <body className={`${inter.className} h-full bg-gray-50 dark:bg-gray-900`}>
       <ThemeProvider>

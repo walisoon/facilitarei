@@ -1,13 +1,40 @@
 'use client';
 
-import { Bell, Search, ChevronLeft, Moon, Sun } from 'lucide-react';
+import { Bell, Search, ChevronLeft, Moon, Sun, LogOut, LogIn, UserPlus } from 'lucide-react';
 import { useSidebar } from '@/contexts/sidebar-context';
 import { useTheme } from '@/contexts/theme-context';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 export function Navbar() {
   const { isOpen, toggle } = useSidebar();
   const { theme, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
+  const router = useRouter();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.push('/login');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
+  };
 
   return (
     <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white dark:bg-black dark:border-gray-800 px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
@@ -80,15 +107,56 @@ export function Navbar() {
             <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200 dark:bg-gray-800" aria-hidden="true" />
 
             {/* Profile dropdown */}
-            <button
-              type="button"
-              className="flex items-center gap-x-2 rounded-full bg-gray-100 dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black"
-            >
-              <span className="sr-only">Abrir menu do usuário</span>
-              <div className="h-8 w-8 rounded-full bg-orange-600 dark:bg-orange-500 flex items-center justify-center">
-                <span className="text-sm font-medium text-white">WM</span>
-              </div>
-            </button>
+            <div className="relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="flex items-center gap-x-2 rounded-full bg-gray-100 dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-black"
+              >
+                <span className="sr-only">Abrir menu do usuário</span>
+                <div className="h-8 w-8 rounded-full bg-orange-600 dark:bg-orange-500 flex items-center justify-center">
+                  <span className="text-sm font-medium text-white">WM</span>
+                </div>
+              </button>
+
+              {/* Dropdown menu */}
+              {showDropdown && (
+                <div className="absolute right-0 mt-2 w-48 rounded-md bg-white dark:bg-gray-900 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  {user ? (
+                    <>
+                      <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-200">
+                        {user.email}
+                      </div>
+                      <div className="border-t border-gray-200 dark:border-gray-700"></div>
+                      <button
+                        onClick={handleLogout}
+                        className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Sair
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => router.push('/login')}
+                        className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <LogIn className="mr-2 h-4 w-4" />
+                        Entrar
+                      </button>
+                      <button
+                        onClick={() => router.push('/signup')}
+                        className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Criar Conta
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

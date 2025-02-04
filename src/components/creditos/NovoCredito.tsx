@@ -5,7 +5,8 @@ import { Dialog, Transition } from '@headlessui/react';
 import { X } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/config/supabase';
+import { supabase } from '@/lib/supabase';
+import CreditosAPI from '@/api/creditos';
 import toast from 'react-hot-toast';
 import { Combobox, Transition as HeadlessTransition } from '@headlessui/react';
 import { Check, ChevronDown } from 'lucide-react';
@@ -17,19 +18,25 @@ interface NovoCreditoProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  creditoParaEditar?: any;
 }
 
-export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
+export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: NovoCreditoProps) {
+  // Função para pegar a data atual formatada YYYY-MM-DD
+  const getCurrentDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
   const [simulacoes, setSimulacoes] = useState<Simulacao[]>([]);
   const [selectedSimulacao, setSelectedSimulacao] = useState<Simulacao | null>(null);
   const [query, setQuery] = useState('');
-
   const [formData, setFormData] = useState({
     nome: '',
     cpf: '',
     rg: '',
     orgaoEmissor: '',
-    data_nascimento: '',
+    data_nascimento: getCurrentDate(),
     naturalidade: '',
     estadoCivil: '',
     conjuge: '',
@@ -57,12 +64,36 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
     valorBem: '',
     entrada: '',
     reducao: false,
-    prazo: '240', // Definir o prazo como 240
+    prazo: '240',
     consultor: '',
     filial: '',
     documentos: [] as File[],
     numeroSimulacao: ''
   });
+
+  // Carregar dados quando estiver editando
+  useEffect(() => {
+    if (creditoParaEditar) {
+      setFormData({
+        ...formData,
+        ...creditoParaEditar,
+        tipoBem: {
+          imovel: creditoParaEditar.tipo_bem === 'imovel',
+          auto: creditoParaEditar.tipo_bem === 'auto',
+          pesados: creditoParaEditar.tipo_bem === 'pesados'
+        },
+        data_nascimento: getCurrentDate(), // Sempre usa a data atual
+        valorBem: creditoParaEditar.valor_bem?.toString() || '',
+        entrada: creditoParaEditar.valor_entrada?.toString() || '',
+        prazo: creditoParaEditar.prazo?.toString() || '240',
+        rendaIndividual: creditoParaEditar.renda_individual?.toString() || '',
+        rendaFamiliar: creditoParaEditar.renda_familiar?.toString() || '',
+        pontScore: creditoParaEditar.pont_score?.toString() || '',
+        orgaoEmissor: creditoParaEditar.orgao_emissor || '',
+        cidadeUF: creditoParaEditar.cidade_uf || ''
+      });
+    }
+  }, [creditoParaEditar]);
 
   const router = useRouter();
 
@@ -112,78 +143,90 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
 
   const handleSimulacaoSelect = (simulacao: Simulacao) => {
     setSelectedSimulacao(simulacao);
-    console.log('Número de parcelas selecionado:', simulacao.numero_parcelas);
     setFormData(prev => ({
       ...prev,
+      // Dados pessoais
       nome: simulacao.nome_cliente || '',
       cpf: simulacao.cpf || '',
+      data_nascimento: getCurrentDate(), // Sempre usa a data atual
       telefone1: simulacao.telefone || '',
       email: simulacao.email || '',
+
+      // Dados do financiamento
       valorBem: simulacao.valor_emprestimo?.toString() || '',
       entrada: simulacao.valor_entrada?.toString() || '',
-      prazo: simulacao.valor_parcela?.toString() || '', // Atualizar a atribuição de prazo para usar o valor da parcela
+      prazo: simulacao.numero_parcelas?.toString() || '240',
+      numeroSimulacao: simulacao.numero || '',
+      consultor: simulacao.consultor || '',
+
+      // Tipo do bem
       tipoBem: {
-        ...prev.tipoBem,
-        [simulacao.tipo_bem?.toLowerCase() || 'imovel']: true
-      },
-      numeroSimulacao: simulacao.numero || ''
+        imovel: simulacao.tipo_bem?.toLowerCase() === 'imovel',
+        auto: simulacao.tipo_bem?.toLowerCase() === 'auto',
+        pesados: simulacao.tipo_bem?.toLowerCase() === 'pesados'
+      }
     }));
+
+    // Mostrar mensagem de sucesso
+    toast.success('Dados da simulação carregados com sucesso!');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+  const handleSubmit = async () => {
     try {
-      const { data, error } = await supabase
-        .from('creditos')
-        .insert([
-          {
-            nome: formData.nome,
-            cpf: formData.cpf,
-            rg: formData.rg,
-            orgao_emissor: formData.orgaoEmissor,
-            data_nascimento: formData.data_nascimento,
-            naturalidade: formData.naturalidade,
-            estado_civil: formData.estadoCivil,
-            conjuge: formData.conjuge,
-            filiacao_materna: formData.filiacaoMaterna,
-            filiacao_paterna: formData.filiacaoPaterna,
-            endereco: formData.endereco,
-            numero: formData.numero,
-            complemento: formData.complemento,
-            bairro: formData.bairro,
-            cep: formData.cep,
-            cidade_uf: formData.cidadeUF,
-            telefone1: formData.telefone1,
-            telefone2: formData.telefone2,
-            email: formData.email,
-            profissao: formData.profissao,
-            empresa: formData.empresa,
-            renda_individual: formData.rendaIndividual,
-            renda_familiar: formData.rendaFamiliar,
-            pont_score: formData.pontScore,
-            restricao: formData.restricao,
-            tipo_bem: formData.tipoBem,
-            valor_bem: formData.valorBem,
-            valor_entrada: formData.entrada,
-            prazo: formData.prazo,
-            reducao: formData.reducao,
-            consultor: formData.consultor,
-            filial: formData.filial
-          }
-        ])
+      console.log('Iniciando submit...', formData);
+      console.log('Tipo dos campos:', {
+        restricao: typeof formData.restricao,
+        reducao: typeof formData.reducao,
+        rendaIndividual: typeof formData.rendaIndividual,
+        valorBem: typeof formData.valorBem,
+        entrada: typeof formData.entrada,
+        prazo: typeof formData.prazo
+      });
 
-      if (error) throw error
+      // Validar apenas campos básicos da simulação
+      const requiredFields = [
+        'nome',
+        'cpf'
+      ];
+
+      const missingFields = requiredFields.filter(field => !formData[field]);
+      console.log('Campos faltando:', missingFields);
       
-      // Gerar PDF após salvar
-      handleViewPDF()
+      if (missingFields.length > 0) {
+        toast.error(`Por favor, preencha todos os campos obrigatórios: ${missingFields.join(', ')}`);
+        return;
+      }
+
+      // Validar se pelo menos um tipo de bem foi selecionado
+      if (!formData.tipoBem.imovel && !formData.tipoBem.auto && !formData.tipoBem.pesados) {
+        toast.error('Por favor, selecione o tipo do bem');
+        return;
+      }
+
+      console.log('Tentando salvar ficha...');
+      let result;
       
-      toast.success('Crédito cadastrado com sucesso!')
-      onClose()
+      if (creditoParaEditar) {
+        // Atualizar ficha existente
+        result = await CreditosAPI.atualizar(creditoParaEditar.id, formData);
+      } else {
+        // Criar nova ficha
+        result = await CreditosAPI.criar(formData);
+      }
+
+      const { data, error } = result;
+      console.log('Resposta da API:', { data, error });
       
+      if (error) {
+        throw error;
+      }
+
+      toast.success(creditoParaEditar ? 'Ficha atualizada com sucesso!' : 'Ficha criada com sucesso!');
+      onSuccess?.();
+      onClose();
     } catch (error) {
-      console.error('Erro ao salvar:', error)
-      toast.error('Erro ao salvar o crédito')
+      console.error('Erro ao salvar ficha:', error);
+      toast.error('Erro ao salvar ficha');
     }
   };
 
@@ -252,7 +295,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
     
     // Continuar a geração do PDF após a imagem ser carregada
     // Adiciona logo e informações do cabeçalho
-    doc.addImage('/images/logo.png', 'PNG', pageWidth - 50, 10, 40, 20);
+    doc.addImage('/logo.png', 'PNG', pageWidth - 50, 10, 40, 20);
     
     // Informações da empresa (lado esquerdo)
     doc.setFontSize(8);
@@ -266,7 +309,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
     doc.setLineWidth(0.1); 
     // Desenha a linha
     doc.line(10, dateLineY, 200, dateLineY); 
-
+    
     // Data
     doc.setFontSize(10);
     doc.text('Data', 12, 40);
@@ -574,7 +617,7 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                   </button>
                 </Dialog.Title>
 
-                <form onSubmit={handleSubmit} className="mt-4 space-y-6">
+                <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="mt-4 space-y-6">
                   {/* Seletor de Simulação */}
                   <div className="w-full">
                     <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
@@ -1076,7 +1119,8 @@ export function NovoCredito({ isOpen, onClose, onSuccess }: NovoCreditoProps) {
                       Cancelar
                     </button>
                     <button
-                      type="submit"
+                      type="button"
+                      onClick={handleSubmit}
                       className="inline-flex justify-center rounded-md bg-orange-500 dark:bg-orange-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-orange-600 dark:hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400 focus:ring-offset-2"
                     >
                       Salvar

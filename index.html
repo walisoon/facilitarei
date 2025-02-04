@@ -53,6 +53,92 @@
 
     <main class="container mt-4">
         <!-- Conteúdo principal será adicionado aqui -->
+        
+        <!-- Modal Novo Crédito -->
+        <div class="modal fade" id="novoCreditoModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Nova Ficha</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="creditForm">
+                            <div class="mb-3">
+                                <label class="form-label">Dados Pessoais</label>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <input type="text" class="form-control" id="nome" placeholder="Nome" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" id="cpf" placeholder="CPF" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" id="rg" placeholder="RG">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="date" class="form-control" id="dataNascimento" placeholder="Data de Nascimento">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="text" class="form-control" id="estadoCivil" placeholder="Estado Civil">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="text" class="form-control" id="naturalidade" placeholder="Naturalidade">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Contato</label>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <input type="tel" class="form-control" id="telefone1" placeholder="Telefone 01">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="tel" class="form-control" id="telefone2" placeholder="Telefone 02">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="email" class="form-control" id="email" placeholder="E-mail">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Profissão e Renda</label>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" id="profissao" placeholder="Profissão">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" id="empresa" placeholder="Empresa">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="number" class="form-control" id="rendaIndividual" placeholder="Renda Individual">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Dados do Crédito</label>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <input type="number" class="form-control" id="valor" placeholder="Valor do Crédito" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="number" class="form-control" id="numeroParcelas" value="240" readonly>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Salvar Ficha</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- Bootstrap JS and dependencies -->

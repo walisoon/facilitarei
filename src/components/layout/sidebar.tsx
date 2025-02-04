@@ -63,18 +63,18 @@ export function Sidebar() {
         {/* Logo */}
         <div className="flex h-16 shrink-0 items-center">
           <Link href="/" className={cn(
-            "flex items-center gap-2 px-2",
+            "flex items-center gap-2 px-2 no-underline",
             !isOpen && "justify-center"
           )}>
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 dark:from-orange-600 dark:to-orange-700">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 dark:from-orange-600 dark:to-orange-700">
               <CircleDollarSign className="h-6 w-6 text-white" />
-            </div>
+            </span>
             {isOpen && (
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col">
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
                   Facilita Cred
                 </h1>
-                <span className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                <span className="text-xs text-gray-600 dark:text-gray-400">
                   Correspondente Bancário
                 </span>
               </div>
@@ -93,7 +93,7 @@ export function Sidebar() {
                 <li key={item.name}>
                   <div>
                     {item.subItems ? (
-                      <div>
+                      <>
                         <Link
                           href={item.href}
                           className={cn(
@@ -152,7 +152,7 @@ export function Sidebar() {
                             ))}
                           </ul>
                         )}
-                      </div>
+                      </>
                     ) : (
                       <Link
                         href={item.href}
