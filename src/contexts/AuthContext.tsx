@@ -1,17 +1,17 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
-import { useRouter } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
-type AuthContextType = {
+interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-};
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -19,19 +19,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Variáveis de ambiente do Supabase não configuradas:', {
-      url: supabaseUrl ? 'configurada' : 'faltando',
-      key: supabaseAnonKey ? 'configurada' : 'faltando'
-    });
-    throw new Error('Configuração do Supabase incompleta');
-  }
-
-  const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
   useEffect(() => {
     const getSession = async () => {
@@ -74,7 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data.user) {
-        router.refresh();
+        console.log('Login bem sucedido:', data.user.email);
+        router.push('/creditos');
       }
     } catch (error) {
       console.error('Erro no login:', error);
@@ -107,9 +95,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    router.refresh();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Erro ao fazer logout:', error);
+        throw error;
+      }
+      router.push('/login');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+      throw error;
+    }
   };
 
   return (
