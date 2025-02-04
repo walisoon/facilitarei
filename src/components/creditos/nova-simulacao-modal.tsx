@@ -43,7 +43,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
     numero_parcelas: number;
     valor_entrada: number;
     valor_parcela: number;
-    status: "Em Análise";
+    status: SimulacaoStatus;
   } | null>(null);
 
   const validarCPF = (cpf: string) => {
@@ -143,7 +143,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
         numero_parcelas: 240, // Fixo em 240 parcelas
         taxa_entrada: Number(((dadosCredito.entrada / dadosCredito.credito) * 100).toFixed(2)),
         valor_parcela: Number(dadosCredito.parcela),
-        status: 'Em Análise',
+        status: 'Em Análise' as SimulacaoStatus,
         data_nascimento: formData.dataNascimento ? new Date(formData.dataNascimento) : undefined,
         telefone: formData.telefone?.trim(),
         email: formData.email?.trim(),
@@ -227,7 +227,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
       numero_parcelas: 240, // Alterado para exibir 240 parcelas
       valor_entrada: dadosCredito.entrada,
       valor_parcela: dadosCredito.parcela,
-      status: 'Em Análise' as const
+      status: 'Em Análise' as SimulacaoStatus
     };
 
     setSimulacoes([...simulacoes, novaSimulacao]);
@@ -263,7 +263,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
           // Garantir que todos os valores numéricos estão no formato correto
           const simulacaoFormatada = {
             ...simulacao,
-            status: 'Em Análise' as const, // Garante que o status está correto
+            status: 'Em Análise' as SimulacaoStatus, // Garante que o status está correto
             valor_emprestimo: Number(simulacao.valor_emprestimo),
             taxa_entrada: Number(simulacao.taxa_entrada),
             numero_parcelas: Number(simulacao.numero_parcelas),
@@ -340,7 +340,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
       numero_parcelas: 240,
       valor_entrada: valorSelecionado.entrada,
       valor_parcela: valorSelecionado.parcela,
-      status: 'Em Análise' as const
+      status: 'Em Análise' as SimulacaoStatus
     };
 
     setSelectedSimulacao(simulacaoAtual);
@@ -706,7 +706,7 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
                     taxa_entrada: valorSelecionado?.credito && valorSelecionado?.entrada 
                       ? Number(((valorSelecionado.entrada / valorSelecionado.credito) * 100).toFixed(2))
                       : 0,
-                    status: 'Em Análise' as const
+                    status: 'Em Análise' as SimulacaoStatus
                   }] : []}
                   dadosCliente={{
                     nome_cliente: formData.nomeCliente,
