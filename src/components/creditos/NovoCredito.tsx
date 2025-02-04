@@ -579,28 +579,18 @@ export function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: N
     doc.line(110, 245, 190, 245);
     doc.text('Consultor Responsável', 135, 250);
 
-    // Aplicando marca d'água por cima de todo o conteúdo
-    const img = new Image();
-    img.src = '/images/watermark.png';
-    img.onload = () => {
-      // Calculando posição central com proporções ajustadas
-      const pageHeight = doc.internal.pageSize.height;
-      const imgWidth = 170;
-      const imgHeight = 125;
-      const x = (pageWidth - imgWidth) / 2;
-      const y = (pageHeight - imgHeight) / 2;
+    // Aplicar marca d'água
+    const opacity = 0.08;
+    doc.saveGraphicsState();
+    doc.setGState({ opacity });
+    doc.addImage(img, 'PNG', x, y, imgWidth, imgHeight);
+    doc.restoreGraphicsState();
 
-      doc.saveGraphicsState();
-      doc.setGState(new doc.GState({ opacity: 0.08 }));
-      doc.addImage(img, 'PNG', x, y, imgWidth, imgHeight);
-      doc.restoreGraphicsState();
-
-      // Salvar o PDF com o nome do cliente
-      const nomeArquivo = formData.nome ? 
-        `${formData.nome.toLowerCase().replace(/\s+/g, '-')}-ficha-cadastral.pdf` : 
-        'ficha-cadastral.pdf';
-      doc.save(nomeArquivo);
-    };
+    // Salvar o PDF com o nome do cliente
+    const nomeArquivo = formData.nome ? 
+      `${formData.nome.toLowerCase().replace(/\s+/g, '-')}-ficha-cadastral.pdf` : 
+      'ficha-cadastral.pdf';
+    doc.save(nomeArquivo);
   };
 
   const calcularParcela = () => {
