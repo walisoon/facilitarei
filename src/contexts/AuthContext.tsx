@@ -15,6 +15,31 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Função de delay
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Função de retry
+async function retryWithDelay<T>(
+  fn: () => Promise<T>,
+  retries = 3,
+  delayMs = 1000,
+  backoff = 2
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (error: any) {
+    if (
+      retries > 0 &&
+      error.message?.includes('Request rate limit reached')
+    ) {
+      console.log(`Aguardando ${delayMs}ms antes de tentar novamente...`);
+      await delay(delayMs);
+      return retryWithDelay(fn, retries - 1, delayMs * backoff, backoff);
+    }
+    throw error;
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,7 +48,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const getSession = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session }, error } = await retryWithDelay(
+          () => supabase.auth.getSession()
+        );
+        
         if (error) {
           console.error('Erro ao buscar sessão:', error);
           return;
@@ -50,10 +78,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error } = await retryWithDelay(
+        () => supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+      );
 
       if (error) {
         console.error('Erro no login:', error);
@@ -62,12 +92,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (data.user) {
         console.log('Login bem sucedido:', data.user.email);
-        // Primeiro atualiza o estado
         setUser(data.user);
-        // Depois redireciona
-        router.push('/creditos');
-        // Força um refresh da página para garantir que tudo está atualizado
+        
+        // Aguarda um momento para garantir que o estado foi atualizado
+        await delay(100);
+        
+        // Força um refresh e redireciona
         router.refresh();
+        router.push('/creditos');
       }
     } catch (error) {
       console.error('Erro no login:', error);
@@ -77,13 +109,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/login`
-        }
-      });
+      const { data, error } = await retryWithDelay(
+        () => supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/login`
+          }
+        })
+      );
 
       if (error) {
         console.error('Erro no signup:', error);
@@ -101,11 +135,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await retryWithDelay(
+        () => supabase.auth.signOut()
+      );
+      
       if (error) {
         console.error('Erro ao fazer logout:', error);
         throw error;
       }
+      
+      setUser(null);
       router.push('/login');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
