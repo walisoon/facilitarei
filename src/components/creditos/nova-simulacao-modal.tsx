@@ -7,7 +7,7 @@ import { SimulacaoPDF } from './simulacao-pdf';
 import { SimulacoesAPI } from '@/lib/supabase';
 import { toast } from 'react-hot-toast';
 import { tabelaCredito } from '@/data/tabelaCredito';
-import { SimulacaoStatus } from '@/types/simulacao';
+import { SimulacaoStatus, Simulacao } from '@/types/simulacao';
 
 interface NovaSimulacaoModalProps {
   isOpen: boolean;
@@ -32,20 +32,9 @@ export function NovaSimulacaoModal({ isOpen, onClose, onSuccess }: NovaSimulacao
 
   const [loading, setLoading] = useState(false);
   const [savingSimulacao, setSavingSimulacao] = useState(false);
-  const [simulacoes, setSimulacoes] = useState<any[]>([]);
+  const [simulacoes, setSimulacoes] = useState<Simulacao[]>([]);
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
-  const [selectedSimulacao, setSelectedSimulacao] = useState<{
-    numero: string;
-    nome_cliente: string;
-    cpf: string;
-    consultor: string;
-    valor_emprestimo: number;
-    taxa_entrada: number;
-    numero_parcelas: number;
-    valor_entrada: number;
-    valor_parcela: number;
-    status: SimulacaoStatus;
-  } | null>(null);
+  const [selectedSimulacao, setSelectedSimulacao] = useState<Simulacao | null>(null);
 
   const validarCPF = (cpf: string) => {
     // Remove caracteres não numéricos
