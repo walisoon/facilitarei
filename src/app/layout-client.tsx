@@ -8,6 +8,7 @@ import { PageProvider } from '@/contexts/page-context'
 import { ThemeProvider } from '@/contexts/theme-context'
 import { cn } from '@/lib/utils'
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -42,14 +43,23 @@ export function ClientLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname();
-  const isAuthPage = pathname === '/login' || pathname === '/signup';
+  const { user } = useAuth();
+  const isAuthPage = pathname?.startsWith('/(auth)') || pathname === '/login' || pathname === '/signup';
 
+  // Se for página de autenticação, mostra apenas o conteúdo sem layout
   if (isAuthPage) {
-    return <>{children}</>;
+    return children;
   }
 
+  // Se não for página de autenticação e não estiver logado, não mostra nada
+  // O middleware já vai redirecionar para o login
+  if (!user) {
+    return null;
+  }
+
+  // Se estiver logado e não for página de autenticação, mostra o layout completo
   return (
-    <body className={`${inter.className} h-full bg-gray-50 dark:bg-gray-900`}>
+    <div className={`${inter.className} h-full bg-gray-50 dark:bg-gray-900`}>
       <ThemeProvider>
         <SidebarProvider>
           <PageProvider>
@@ -59,6 +69,6 @@ export function ClientLayout({
           </PageProvider>
         </SidebarProvider>
       </ThemeProvider>
-    </body>
+    </div>
   );
 }
