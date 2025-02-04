@@ -50,8 +50,47 @@ interface FormData {
   reducao: boolean;
   consultor: string;
   filial: string;
+  status: string;
   restricao: boolean;
+  documentos: Array<{ nome: string; url: string; }>;
 }
+
+const initialFormData: FormData = {
+  nome: '',
+  cpf: '',
+  rg: '',
+  orgao_emissor: '',
+  data_nascimento: '',
+  naturalidade: '',
+  estado_civil: '',
+  conjuge: '',
+  filiacao_materna: '',
+  filiacao_paterna: '',
+  endereco: '',
+  numero: '',
+  complemento: '',
+  bairro: '',
+  cep: '',
+  cidade_uf: '',
+  telefone1: '',
+  telefone2: '',
+  email: '',
+  profissao: '',
+  empresa: '',
+  renda_individual: '',
+  renda_familiar: '',
+  pont_score: '',
+  tipo_bem: '',
+  valor_bem: '',
+  valor_entrada: '',
+  prazo: '',
+  reducao: false,
+  consultor: '',
+  filial: '',
+  status: 'Em análise',
+  restricao: false,
+  documentos: []
+};
 
 export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEditar }: NovoCreditoProps) {
   // Função para pegar a data atual formatada YYYY-MM-DD
@@ -63,40 +102,7 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
   const [simulacoes, setSimulacoes] = useState<Credito[]>([]);
   const [selectedSimulacao, setSelectedSimulacao] = useState<Credito | null>(null);
   const [query, setQuery] = useState('');
-  const [formData, setFormData] = useState<FormData>({
-    nome: '',
-    cpf: '',
-    rg: '',
-    orgao_emissor: '',
-    data_nascimento: getCurrentDate(),
-    naturalidade: '',
-    estado_civil: '',
-    conjuge: '',
-    filiacao_materna: '',
-    filiacao_paterna: '',
-    endereco: '',
-    numero: '',
-    complemento: '',
-    bairro: '',
-    cep: '',
-    cidade_uf: '',
-    telefone1: '',
-    telefone2: '',
-    email: '',
-    profissao: '',
-    empresa: '',
-    renda_individual: '',
-    renda_familiar: '',
-    pont_score: '',
-    tipo_bem: '',
-    valor_bem: '',
-    valor_entrada: '',
-    prazo: '240',
-    reducao: false,
-    consultor: '',
-    filial: '',
-    restricao: false
-  });
+  const [formData, setFormData] = useState<FormData>(initialFormData);
 
   // Carregar dados quando estiver editando
   useEffect(() => {
