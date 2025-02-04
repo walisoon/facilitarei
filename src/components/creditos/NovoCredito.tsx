@@ -180,13 +180,13 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
       // Dados profissionais
       profissao: simulacao.profissao || '',
       empresa: simulacao.empresa || '',
-      renda_individual: simulacao.renda_individual || 0,
+      renda_individual: simulacao.renda_individual?.toString() || '',
       
       // Dados do bem
       tipo_bem: simulacao.tipo_bem || '',
-      valor_bem: simulacao.valor_bem || 0,
-      valor_entrada: simulacao.valor_entrada || 0,
-      prazo: simulacao.prazo || 0,
+      valor_bem: simulacao.valor_bem?.toString() || '',
+      valor_entrada: simulacao.valor_entrada?.toString() || '',
+      prazo: simulacao.prazo?.toString() || '',
       
       // Status
       status: simulacao.status || 'Em análise',
