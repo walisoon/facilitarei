@@ -50,7 +50,7 @@ interface FormData {
   reducao: boolean;
   consultor: string;
   filial: string;
-  status: string;
+  status: "Aprovada" | "Em Análise" | "Reprovada";
   restricao: boolean;
   documentos: Array<{ nome: string; url: string; }>;
 }
@@ -87,7 +87,7 @@ const initialFormData: FormData = {
   reducao: false,
   consultor: '',
   filial: '',
-  status: 'Em análise',
+  status: 'Em Análise',
   restricao: false,
   documentos: []
 };
