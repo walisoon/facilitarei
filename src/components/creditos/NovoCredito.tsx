@@ -150,16 +150,18 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
     }
   }, [isOpen]);
 
-  const filteredSimulacoes = query === ''
-    ? simulacoes
-    : simulacoes.filter((simulacao) => {
-        const searchStr = query.toLowerCase();
-        return (
-          simulacao.nome_cliente?.toLowerCase().includes(searchStr) ||
-          simulacao.cpf?.includes(searchStr) ||
-          simulacao.numero?.toLowerCase().includes(searchStr)
-        );
-      });
+  const filterSimulacoes = (simulacoes: Credito[], query: string) => {
+    if (!query) return simulacoes;
+    return simulacoes.filter((simulacao) => {
+      const searchStr = query.toLowerCase();
+      return (
+        simulacao.nome?.toLowerCase().includes(searchStr) ||
+        simulacao.cpf?.includes(searchStr)
+      );
+    });
+  };
+
+  const filteredSimulacoes = filterSimulacoes(simulacoes, query);
 
   console.log('Simulações filtradas:', filteredSimulacoes);
 
