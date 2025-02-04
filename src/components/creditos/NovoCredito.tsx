@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { Combobox, Transition as HeadlessTransition } from '@headlessui/react';
 import { Check, ChevronDown } from 'lucide-react';
 import { Credito } from '@/types/credito';
+import { jsPDF } from 'jspdf';
 
 interface NovoCreditoProps {
   isOpen: boolean;
@@ -413,265 +414,89 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
   };
 
   const handleViewPDF = () => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
-    
-    // Continuar a geração do PDF após a imagem ser carregada
-    // Adiciona logo e informações do cabeçalho
-    doc.addImage('/logo.png', 'PNG', pageWidth - 50, 10, 40, 20);
-    
-    // Informações da empresa (lado esquerdo)
-    doc.setFontSize(8);
-    doc.text('FACILITA CRED - CORRESPONDENTE BANCÁRIO AUTORIZADO', 10, 15);
-    doc.text('Rua das Pitangueiras, Nº 274 - Setor Comercial - MT', 10, 20);
-    doc.text('Contato: (11) 5152-5823 ou (66) 9.9207-3183 - WWW.FACILITACREDSINOP.COM.BR', 10, 25);
-    
-    // Adicionar uma linha fina acima da data
-    const dateLineY = 31; 
-    doc.setDrawColor(0); 
-    doc.setLineWidth(0.1); 
-    // Desenha a linha
-    doc.line(10, dateLineY, 200, dateLineY); 
-    
-    // Data
-    doc.setFontSize(10);
-    doc.text('Data', 12, 40);
-    doc.text(new Date().toLocaleDateString('pt-BR'), 32, 40);
-    
-    // Ajustar a posição vertical da data e do restante do conteúdo
-    const dateY = 45; 
-    
-    // Função para desenhar título de seção
-    const drawSectionTitle = (title: string, y: number) => {
-      doc.setDrawColor(255, 230, 210); 
-      doc.rect(10, y, pageWidth - 20, 7);
-      doc.setFillColor(255, 236, 217);
-      doc.rect(10, y, pageWidth - 20, 7, 'F');
-      doc.text(title, 12, y + 5);
-    };
-    
-    // Dados Pessoais
-    drawSectionTitle('Dados Pessoais', 45);
-    
-    // Nome e CPF
-    doc.text('Nome', 12, 57);
-    doc.text(formData.nome || '', 42, 57);
-    
-    // Número da Simulação
-    doc.text('Nº Prosposta', 122, 57);
-    doc.text(formData.numero || '', 152, 57);
-    
-    // RG e CPF
-    doc.text('RG', 12, 64);
-    doc.text(`${formData.rg || ''} / Org.Em: ${formData.orgao_emissor || ''}`, 42, 64);
-    doc.text('CPF', 122, 64);
-    doc.text(formData.cpf || '', 152, 64);
-    
-    // Data Nasc. e Naturalidade
-    doc.text('Data Nasc.', 12, 71);
-    doc.text(formData.data_nascimento || '', 42, 71);
-    doc.text('Naturalidade', 122, 71);
-    doc.text(formData.naturalidade || '', 152, 71);
-    
-    // Estado Civil e Cônjuge
-    doc.text('Estado Civil', 12, 78);
-    doc.text(formData.estado_civil || '', 42, 78);
-    doc.text('Cônjuge', 122, 78);
-    doc.text(formData.conjuge || '', 152, 78);
-    
-    // Filiação
-    doc.text('Filiação Materna', 12, 85);
-    doc.text(formData.filiacao_materna || '', 42, 85);
-    
-    doc.text('Filiação Paterna', 12, 92);
-    doc.text(formData.filiacao_paterna || '', 42, 92);
-    
-    // Endereço
-    drawSectionTitle('Endereço', 94);
-    
-    doc.text('Endereço', 12, 106);
-    doc.text(formData.endereco || '', 42, 106);
-    doc.text('Nº', 122, 106);
-    doc.text(formData.numero || '', 152, 106);
-    
-    // Complemento e Bairro
-    doc.text('Complemento', 12, 113);
-    doc.text(formData.complemento || '', 42, 113);
-    doc.text('Bairro', 122, 113);
-    doc.text(formData.bairro || '', 152, 113);
-    
-    // CEP e Cidade/UF
-    doc.text('CEP', 12, 120);
-    doc.text(formData.cep || '', 42, 120);
-    doc.text('Cidade/UF', 122, 120);
-    doc.text(formData.cidade_uf || '', 152, 120);
-    
-    // Contato
-    drawSectionTitle('Contato', 122);
-    
-    // Telefones
-    doc.text('Telefone 01', 12, 134);
-    doc.text(formData.telefone1 || '', 42, 134);
-    doc.text('Telefone 02', 122, 134);
-    doc.text(formData.telefone2 || '', 152, 134);
-    
-    // Email
-    doc.text('E-mail', 12, 141);
-    doc.text(formData.email || '', 42, 141);
-    
-    // Profissão
-    drawSectionTitle('Profissão', 143);
-    
-    doc.text('Profissão', 12, 155);
-    doc.text(formData.profissao || '', 42, 155);
-    doc.text('Empresa', 122, 155);
-    doc.text(formData.empresa || '', 152, 155);
-    
-    // Renda
-    doc.text('Renda Indiv.', 12, 162);
-    doc.text(formData.renda_individual ? `R$ ${formData.renda_individual.replace('.', ',')}` : '', 42, 162);
-    doc.text('Restrição', 122, 162);
-    
-    // Função para desenhar checkbox com visto
-    const drawCheckbox = (x: number, y: number, checked: boolean) => {
-      // Salva a cor atual
-      const currentDrawColor = doc.getDrawColor();
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
       
-      // Define preto para a caixa
-      doc.setDrawColor(0);
-      doc.rect(x, y, 3, 3);
-      
-      if (checked) {
-        // Desenha um V usando linhas pretas
-        doc.setLineWidth(0.1);
-        doc.line(x + 0.5, y + 1.5, x + 1.2, y + 2.2);
-        doc.line(x + 1.2, y + 2.2, x + 2.5, y + 0.8);
-      }
-      
-      // Restaura a cor original
-      doc.setDrawColor(currentDrawColor);
-    };
-    
-    // Checkboxes para restrição
-    drawCheckbox(152, 159, formData.restricao);
-    doc.setFontSize(8);  
-    doc.text('SIM', 156, 162);
-    drawCheckbox(167, 159, !formData.restricao);
-    doc.text('NÃO', 171, 162);
-    
-    // Dados do Bem
-    drawSectionTitle('Dados do Bem', 164);
-    
-    // Tipo do bem
-    doc.text('Tipo do bem', 12, 176);
-    
-    // Valor da Parcela
-    const valorParcelaFormatado = formatCurrency(formData.prazo);
-    // Mover a exibição do valor da parcela para uma posição mais baixa
-    const novaPosicaoY = 190; 
-    // Ajustar a posição do texto 'Valor da Parcela' para o lado direito
-    const posicaoTextoX = 122; 
-    doc.text('Valor da Parcela', posicaoTextoX, novaPosicaoY); 
-    // Ajustar a posição do valor da parcela para o lado direito
-    const posicaoX = 152; 
-    doc.text(valorParcelaFormatado, posicaoX, novaPosicaoY);
-    
-    // Checkboxes para tipo do bem
-    // drawCheckbox(42, 173, formData.tipoBem?.imovel);
-    // doc.text('IMÓVEL', 46, 176);
-    // drawCheckbox(67, 173, formData.tipoBem?.auto);
-    // doc.text('AUTO', 71, 176);
-    // drawCheckbox(92, 173, formData.tipoBem?.pesados);
-    // doc.text('PESADOS', 96, 176);
-    
-    // Ajustar a posição do valor 'R$ 500.000,00' para afastá-lo do texto 'Valor do Bem'
-    doc.text('Valor do bem', 125, 176);
-    doc.text(formData.valor_bem ? formatCurrency(formData.valor_bem) : '', 150, 176);
-    
-    // Entrada e Parcelas
-    doc.text('Entrada', 12, 183);
-    doc.text(formData.valor_entrada ? formatCurrency(formData.valor_entrada) : '', 42, 183);
-    // Remover a exibição duplicada do valor da parcela
-    // doc.text(formData.prazo || '', 152, 183);
-    
-    // Redução
-    doc.text('Redução', 12, 190);
-    
-    // Checkboxes para redução
-    drawCheckbox(42, 187, formData.reducao);
-    doc.text('SIM', 46, 190);
-    drawCheckbox(57, 187, !formData.reducao);
-    doc.text('NÃO', 61, 190);
-    
-    // Definir o prazo como 240 ao exibir no PDF
-    doc.text('Prazo', 82, 190);
-    doc.text('240', 102, 190);
-    
-    // Dados do Consultor
-    drawSectionTitle('Dados do Consultor', 192);
-    
-    doc.text('Consultor', 12, 204);
-    doc.text(formData.consultor || '', 42, 204);
-    doc.text('Filial', 122, 204);
-    doc.text(formData.filial || '', 152, 204);
-    
-    // Texto de autorização
-    doc.setFontSize(5);
-    doc.setTextColor(80); 
-    
-    // Adicionar uma linha fina acima do termo
-    const lineY = 210; 
-    doc.setDrawColor(0); 
-    doc.setLineWidth(0.1); 
-    // Desenha a linha
-    doc.line(10, lineY, 200, lineY); 
-    
-    // Centralizar o texto
-    const texto = 'Autorizo o envio deste formulário para solicitação de vaga e análise cadastral para as condições a mim apresentadas. Sabendo que no caso de aprovação, se optar por não ' +
-                  'dar continuidade no processo e nas condições aprovadas, poderei ficar restrito dentro do sistema de análise desta instituição durante o período de noventa dias, podendo ' +
-                  'fazer outra oferta apenas após o periodo de restrição. Todas as propostas são fiscalizadas e autorizadas pelo BACEN e regulamentados pela Lei Federal 11.795/08.';
-    
-    // Quebrar o texto em linhas
-    const splitText = doc.splitTextToSize(texto, 180); 
-    const textX = (pageWidth - doc.getTextWidth(splitText[0])) / 2; 
+      // Configurações de estilo
+      const titleFontSize = 16;
+      const headerFontSize = 12;
+      const textFontSize = 10;
+      const lineHeight = 7;
+      let y = 20;
 
-    // Adiciona o texto quebrado
-    splitText.forEach((line: string, index: number) => {
-      doc.text(line, textX, 215 + (index * 5), { align: 'justify' }); 
-    });
-    
-    // Linhas para assinatura
-    doc.setDrawColor(200, 200, 200); 
-    doc.setFontSize(10); 
-    
-    doc.line(10, 245, 90, 245);
-    doc.text('Solicitante', 40, 250);
-    
-    doc.line(110, 245, 190, 245);
-    doc.text('Consultor Responsável', 135, 250);
+      // Título
+      doc.setFontSize(titleFontSize);
+      doc.text('Ficha de Crédito', pageWidth / 2, y, { align: 'center' });
+      y += lineHeight * 2;
 
-    // Aplicar marca d'água
-    const img = new Image();
-    img.src = '/images/watermark.png';
-      
-    // Calculando posição central com proporções ajustadas
-    const pageHeight = doc.internal.pageSize.height;
-    const imgWidth = 170;
-    const imgHeight = 125;
-    const x = (pageWidth - imgWidth) / 2;
-    const y = (pageHeight - imgHeight) / 2;
+      // Dados pessoais
+      doc.setFontSize(headerFontSize);
+      doc.text('Dados Pessoais', 20, y);
+      y += lineHeight;
 
-    const opacity = 0.08;
-    doc.saveGraphicsState();
-    doc.setGState({ opacity });
-    doc.addImage(img, 'PNG', x, y, imgWidth, imgHeight);
-    doc.restoreGraphicsState();
+      doc.setFontSize(textFontSize);
+      doc.text(`Nome: ${formData.nome}`, 20, y); y += lineHeight;
+      doc.text(`CPF: ${formData.cpf}`, 20, y); y += lineHeight;
+      doc.text(`RG: ${formData.rg}`, 20, y); y += lineHeight;
+      doc.text(`Data de Nascimento: ${formData.data_nascimento}`, 20, y); y += lineHeight;
+      doc.text(`Estado Civil: ${formData.estado_civil}`, 20, y); y += lineHeight;
+      y += lineHeight;
 
-    // Salvar o PDF com o nome do cliente
-    const nomeArquivo = formData.nome ? 
-      `${formData.nome.toLowerCase().replace(/\s+/g, '-')}-ficha-cadastral.pdf` : 
-      'ficha-cadastral.pdf';
-    doc.save(nomeArquivo);
+      // Contato
+      doc.setFontSize(headerFontSize);
+      doc.text('Contato', 20, y);
+      y += lineHeight;
+
+      doc.setFontSize(textFontSize);
+      doc.text(`Telefone: ${formData.telefone1}`, 20, y); y += lineHeight;
+      doc.text(`Email: ${formData.email}`, 20, y); y += lineHeight;
+      doc.text(`Endereço: ${formData.endereco}, ${formData.numero}`, 20, y); y += lineHeight;
+      doc.text(`Bairro: ${formData.bairro}`, 20, y); y += lineHeight;
+      doc.text(`CEP: ${formData.cep}`, 20, y); y += lineHeight;
+      doc.text(`Cidade/UF: ${formData.cidade_uf}`, 20, y); y += lineHeight;
+      y += lineHeight;
+
+      // Dados profissionais
+      doc.setFontSize(headerFontSize);
+      doc.text('Dados Profissionais', 20, y);
+      y += lineHeight;
+
+      doc.setFontSize(textFontSize);
+      doc.text(`Profissão: ${formData.profissao}`, 20, y); y += lineHeight;
+      doc.text(`Empresa: ${formData.empresa}`, 20, y); y += lineHeight;
+      doc.text(`Renda Individual: R$ ${formData.renda_individual}`, 20, y); y += lineHeight;
+      y += lineHeight;
+
+      // Dados do bem
+      doc.setFontSize(headerFontSize);
+      doc.text('Dados do Bem', 20, y);
+      y += lineHeight;
+
+      doc.setFontSize(textFontSize);
+      doc.text(`Tipo do Bem: ${formData.tipo_bem}`, 20, y); y += lineHeight;
+      doc.text(`Valor do Bem: R$ ${formData.valor_bem}`, 20, y); y += lineHeight;
+      doc.text(`Valor de Entrada: R$ ${formData.valor_entrada}`, 20, y); y += lineHeight;
+      doc.text(`Prazo: ${formData.prazo} meses`, 20, y); y += lineHeight;
+      y += lineHeight;
+
+      // Status
+      doc.setFontSize(headerFontSize);
+      doc.text('Status', 20, y);
+      y += lineHeight;
+
+      doc.setFontSize(textFontSize);
+      doc.text(`Status: ${formData.status}`, 20, y); y += lineHeight;
+      doc.text(`Restrição: ${formData.restricao ? 'Sim' : 'Não'}`, 20, y); y += lineHeight;
+      doc.text(`Consultor: ${formData.consultor}`, 20, y); y += lineHeight;
+      doc.text(`Filial: ${formData.filial}`, 20, y);
+
+      // Salvar o PDF
+      doc.save(`ficha-${formData.nome}.pdf`);
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar PDF');
+    }
   };
 
   const calcularParcela = () => {
