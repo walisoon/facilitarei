@@ -258,61 +258,18 @@ export const CreditosAPI = {
   // Criar nova ficha de crédito
   async criar(credito: any) {
     try {
-      const { data, error } = await supabase
+      // Inserir o crédito na tabela
+      const { data: creditoData, error: creditoError } = await supabase
         .from('creditos')
-        .insert([{
-          nome: credito.nome,
-          cpf: credito.cpf,
-          rg: credito.rg,
-          orgao_emissor: credito.orgaoEmissor,
-          data_nascimento: credito.data_nascimento,
-          naturalidade: credito.naturalidade,
-          estado_civil: credito.estadoCivil,
-          conjuge: credito.conjuge,
-          filiacao_materna: credito.filiacaoMaterna,
-          filiacao_paterna: credito.filiacaoPaterna,
-          
-          // Endereço
-          endereco: credito.endereco,
-          numero: credito.numero,
-          complemento: credito.complemento,
-          bairro: credito.bairro,
-          cep: credito.cep,
-          cidade_uf: credito.cidadeUF,
-          
-          // Contato
-          telefone1: credito.telefone1,
-          telefone2: credito.telefone2,
-          email: credito.email,
-          
-          // Profissão e Renda
-          profissao: credito.profissao,
-          empresa: credito.empresa,
-          renda_individual: parseFloat(credito.rendaIndividual?.replace(/[^\d,]/g, '').replace(',', '.')) || 0,
-          renda_familiar: parseFloat(credito.rendaFamiliar?.replace(/[^\d,]/g, '').replace(',', '.')) || 0,
-          pont_score: parseFloat(credito.pontScore) || 0,
-          restricao: credito.restricao || false,
-          
-          // Dados do Bem
-          tipo_bem: Object.keys(credito.tipoBem).find(key => credito.tipoBem[key]) || '',
-          valor_bem: parseFloat(credito.valorBem?.replace(/[^\d,]/g, '').replace(',', '.')) || 0,
-          valor_entrada: parseFloat(credito.entrada?.replace(/[^\d,]/g, '').replace(',', '.')) || 0,
-          prazo: parseInt(credito.prazo) || 240,
-          reducao: credito.reducao || false,
-          
-          // Dados do Consultor
-          consultor: credito.consultor,
-          filial: credito.filial,
-          
-          // Sistema
-          status: 'Em Análise',
-          user_id: supabase.auth.user()?.id
-        }])
+        .insert({
+          ...credito,
+          user_id: (await supabase.auth.getUser()).data.user?.id
+        })
         .select()
         .single();
 
-      if (error) throw error;
-      return { data, error: null };
+      if (creditoError) throw creditoError;
+      return { data: creditoData, error: null };
     } catch (error) {
       console.error('Erro ao criar ficha:', error);
       return { data: null, error };
