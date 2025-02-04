@@ -577,7 +577,7 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
                           <Combobox.Input
                             className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 dark:text-gray-100 bg-transparent focus:ring-0"
                             displayValue={(simulacao: Credito | null) => 
-                              simulacao ? `${simulacao.nome_cliente} - ${simulacao.numero || ''}` : ''
+                              simulacao ? `${simulacao.nome} - ${simulacao.numero || ''}` : ''
                             }
                             onChange={(event) => setQuery(event.target.value)}
                             placeholder="Digite para buscar uma simulação..."
@@ -619,7 +619,7 @@ export default function NovoCredito({ isOpen, onClose, onSuccess, creditoParaEdi
                                           selected ? 'font-medium' : 'font-normal'
                                         }`}
                                       >
-                                        {simulacao.nome_cliente} - {simulacao.numero || ''} 
+                                        {simulacao.nome} - {simulacao.numero || ''} 
                                         <span className="ml-2 text-sm opacity-75">
                                           (R$ {simulacao.valor_emprestimo?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
                                         </span>
