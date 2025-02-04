@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Search, FileText, Pencil, Trash2 } from 'lucide-react';
 import { usePage } from '@/contexts/page-context';
 import { jsPDF } from 'jspdf';
-import type { GState } from 'jspdf';
+import type { jsPDF as JsPDF } from 'jspdf';
 import toast from 'react-hot-toast';
 import { CreditosAPI } from '@/lib/supabase';
 import { NovoCredito } from '@/components/creditos/NovoCredito';
@@ -261,9 +261,10 @@ export default function CreditosPage() {
       const x: number = (pageWidth - imgWidth) / 2;
       const y: number = (pageHeight - imgHeight) / 2;
 
+      // Criando um novo estado gráfico com opacidade
+      const opacity = 0.08;
       doc.saveGraphicsState();
-      const gState = new doc.GState({ opacity: 0.08 }) as GState;
-      doc.setGState(gState);
+      doc.setGState({ opacity });
       doc.addImage(img, 'PNG', x, y, imgWidth, imgHeight);
       doc.restoreGraphicsState();
 
