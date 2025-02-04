@@ -1,13 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import toast from 'react-hot-toast';
+import { CreditosAPI } from '@/lib/supabase';
+import NovoCredito from '@/components/creditos/NovoCredito';
 import { Plus, Search, FileText, Pencil, Trash2 } from 'lucide-react';
 import { usePage } from '@/contexts/page-context';
 import { jsPDF } from 'jspdf';
 import type { jsPDF as JsPDF } from 'jspdf';
-import toast from 'react-hot-toast';
-import { CreditosAPI } from '@/lib/supabase';
-import { NovoCredito } from '@/components/creditos/NovoCredito';
 
 interface Ficha {
   id: string;
