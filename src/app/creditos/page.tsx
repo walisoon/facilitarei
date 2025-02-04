@@ -17,48 +17,15 @@ import { Plus, Search, FileText, Pencil, Trash2 } from 'lucide-react';
 import { usePage } from '@/contexts/page-context';
 import { jsPDF } from 'jspdf';
 import type { jsPDF as JsPDF } from 'jspdf';
+import { Credito } from '@/types/credito';
 
-interface Ficha {
-  id: string;
-  nome: string;
-  cpf: string;
-  rg: string;
-  data_nascimento: string;
-  estado_civil: string;
-  naturalidade: string;
-  orgao_emissor?: string;
-  numero_simulacao?: string;
-  conjuge?: string;
-  filiacao_materna?: string;
-  filiacao_paterna?: string;
-  endereco?: string;
-  numero?: string;
-  complemento?: string;
-  bairro?: string;
-  cep?: string;
-  cidade_uf?: string;
-  telefone1?: string;
-  telefone2?: string;
-  email?: string;
-  profissao?: string;
-  empresa?: string;
-  renda_individual?: number;
-  restricao?: number;
-  tipo_bem?: 'imovel' | 'auto' | 'pesados';
-  valor_bem?: number;
-  valor_entrada?: number;
-  reducao?: number;
-  prazo?: number;
-  consultor?: string;
-  filial?: string;
-  status?: string;
-}
+type Ficha = Credito;
 
 export default function CreditosPage() {
   const { setTitle } = usePage();
   const [fichas, setFichas] = useState<Ficha[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedFicha, setSelectedFicha] = useState<Ficha | null>(null);
+  const [selectedFicha, setSelectedFicha] = useState<Ficha | undefined>();
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   const handleViewPDF = (ficha: Ficha) => {
@@ -302,7 +269,7 @@ export default function CreditosPage() {
   }, [setTitle]);
 
   const handleNovoCadastro = () => {
-    setSelectedFicha(null);
+    setSelectedFicha(undefined);
     setIsModalOpen(true);
   };
 
@@ -443,7 +410,10 @@ export default function CreditosPage() {
       {/* Modal de Nova Ficha */}
       <NovoCredito
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setSelectedFicha(undefined);
+          setIsModalOpen(false);
+        }}
         onSuccess={() => {
           loadFichas();
           setIsModalOpen(false);
