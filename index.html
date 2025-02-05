@@ -29,7 +29,7 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav ms-auto">
+                    <ul class="navbar-nav me-auto">
                         <li class="nav-item">
                             <a class="nav-link" href="#">Início</a>
                         </li>
@@ -46,6 +46,10 @@
                             <a class="nav-link" href="#">Configurações</a>
                         </li>
                     </ul>
+                    <div class="d-flex align-items-center">
+                        <span class="me-3" id="userEmail"></span>
+                        <button class="btn btn-outline-danger" id="logoutButton">Sair</button>
+                    </div>
                 </div>
             </div>
         </nav>
@@ -141,7 +145,38 @@
         </div>
     </main>
 
-    <!-- Bootstrap JS and dependencies -->
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Auth JS -->
+    <script src="js/auth.js"></script>
+    
+    <script>
+        // Verificar autenticação ao carregar a página
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (error) throw error;
+                
+                if (!session) {
+                    // Se não estiver autenticado, redirecionar para login
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                // Mostrar email do usuário
+                const userEmail = document.getElementById('userEmail');
+                if (userEmail && session.user) {
+                    userEmail.textContent = session.user.email;
+                }
+                
+            } catch (error) {
+                console.error('Erro ao verificar sessão:', error);
+                window.location.href = '/login.html';
+            }
+        });
+    </script>
 </body>
 </html>
