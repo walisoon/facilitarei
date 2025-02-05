@@ -1,6 +1,6 @@
 [build]
   command = "npm run build"
-  publish = "."
+  publish = ".next"
 
 [build.environment]
   NEXT_PUBLIC_RUNTIME_CONFIG_ENABLED = "true"
