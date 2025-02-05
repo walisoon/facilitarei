@@ -45,6 +45,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // Função para atualizar o estado do usuário
+  const updateUserState = async (newUser: User | null) => {
+    setUser(newUser);
+    
+    if (newUser) {
+      // Se tiver usuário, redireciona para /creditos
+      await delay(100); // Pequeno delay para garantir que o estado foi atualizado
+      router.refresh();
+      router.push('/creditos');
+    } else {
+      // Se não tiver usuário, redireciona para /login
+      router.push('/login');
+    }
+  };
+
   useEffect(() => {
     const getSession = async () => {
       try {
@@ -56,7 +71,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('Erro ao buscar sessão:', error);
           return;
         }
-        setUser(session?.user ?? null);
+
+        await updateUserState(session?.user ?? null);
       } catch (error) {
         console.error('Erro ao buscar sessão:', error);
       } finally {
@@ -67,10 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        router.refresh();
-      }
+      await updateUserState(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
@@ -92,14 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (data.user) {
         console.log('Login bem sucedido:', data.user.email);
-        setUser(data.user);
-        
-        // Aguarda um momento para garantir que o estado foi atualizado
-        await delay(100);
-        
-        // Força um refresh e redireciona
-        router.refresh();
-        router.push('/creditos');
+        await updateUserState(data.user);
       }
     } catch (error) {
       console.error('Erro no login:', error);
@@ -144,8 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
       
-      setUser(null);
-      router.push('/login');
+      await updateUserState(null);
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
       throw error;
