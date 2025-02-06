@@ -4,8 +4,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Sistema de Gestão de Crédito</title>
+    
+    <!-- Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <!-- JavaScript Inline -->
+    <script>
+        // Debug
+        console.log('Script carregado');
+        alert('Script carregado');
+        
+        // Inicializar Supabase
+        const supabase = supabase.createClient(
+            'https://qkimxruewcensbnfllvv.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFraW14cnVld2NlbnNibmZsbHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwOTIxMzksImV4cCI6MjA0ODY2ODEzOX0.tLnz1o3ximSJFMHb1kRzbfmF-4gIP_i-YD6n5TH24fE'
+        );
+        
+        // Função de login
+        function login() {
+            alert('Botão clicado');
+            console.log('Botão clicado');
+            
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+            
+            alert('Email: ' + email);
+            console.log('Email:', email);
+            
+            // Tentar login
+            supabase.auth.signInWithPassword({
+                email: email,
+                password: senha
+            })
+            .then(response => {
+                alert('Resposta do Supabase: ' + JSON.stringify(response));
+                console.log('Resposta:', response);
+                
+                if (response.error) {
+                    alert('Erro: ' + response.error.message);
+                    return;
+                }
+                
+                // Salvar e redirecionar
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+                sessionStorage.setItem('isAuthenticated', 'true');
+                window.location.href = 'index.html';
+            })
+            .catch(error => {
+                alert('Erro: ' + error.message);
+                console.error('Erro:', error);
+            });
+        }
+        
+        // Quando a página carregar
+        window.onload = function() {
+            alert('Página carregada');
+            console.log('Página carregada');
+            
+            // Verificar autenticação
+            if (sessionStorage.getItem('isAuthenticated') === 'true') {
+                window.location.href = 'index.html';
+            }
+        };
+    </script>
+    
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
     <!-- Custom CSS -->
     <style>
         body {
@@ -57,10 +122,10 @@
                 <input type="email" class="form-control" id="email" required>
             </div>
             <div class="mb-3">
-                <label for="password" class="form-label">Senha</label>
-                <input type="password" class="form-control" id="password" required>
+                <label for="senha" class="form-label">Senha</label>
+                <input type="password" class="form-control" id="senha" required>
             </div>
-            <button onclick="fazerLogin()" class="btn btn-primary w-100">Entrar</button>
+            <button onclick="login()" class="btn btn-primary w-100">Entrar</button>
             
             <div class="register-link">
                 <p>Não tem uma conta?</p>
@@ -68,87 +133,5 @@
             </div>
         </div>
     </div>
-
-    <!-- Supabase -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        // Inicializar o cliente Supabase
-        const SUPABASE_URL = 'https://qkimxruewcensbnfllvv.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFraW14cnVld2NlbnNibmZsbHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwOTIxMzksImV4cCI6MjA0ODY2ODEzOX0.tLnz1o3ximSJFMHb1kRzbfmF-4gIP_i-YD6n5TH24fE';
-
-        console.log('Inicializando Supabase...');
-        const supabase = window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        // Função para fazer login
-        async function fazerLogin() {
-            console.log('Botão clicado');
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            console.log('Email:', email);
-            
-            // Desabilitar botão
-            const button = document.querySelector('button');
-            button.disabled = true;
-            button.innerHTML = 'Entrando...';
-            
-            try {
-                console.log('Chamando Supabase...');
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
-                
-                if (error) {
-                    console.error('Erro:', error);
-                    alert('Erro: ' + error.message);
-                    return;
-                }
-                
-                console.log('Sucesso:', data);
-                
-                // Salvar dados
-                localStorage.setItem('user', JSON.stringify(data.user));
-                sessionStorage.setItem('isAuthenticated', 'true');
-                
-                // Redirecionar
-                console.log('Redirecionando...');
-                window.location.href = 'index.html';
-                
-            } catch (error) {
-                console.error('Erro:', error);
-                alert('Erro: ' + error.message);
-            } finally {
-                // Restaurar botão
-                button.disabled = false;
-                button.innerHTML = 'Entrar';
-            }
-        }
-        
-        // Verificar estado inicial
-        window.onload = () => {
-            console.log('Página carregada');
-            console.log('URL:', window.location.href);
-            
-            // Verificar se já está autenticado
-            const isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
-            console.log('Autenticado?', isAuthenticated);
-            
-            if (isAuthenticated) {
-                window.location.href = 'index.html';
-            }
-            
-            // Adicionar handler para Enter
-            document.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    fazerLogin();
-                }
-            });
-        };
-    </script>
 </body>
 </html>
