@@ -10,18 +10,17 @@
     
     <!-- JavaScript Inline -->
     <script>
+        // Inicializar Supabase
+        const SUPABASE_URL = 'https://qkimxruewcensbnfllvv.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFraW14cnVld2NlbnNibmZsbHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwOTIxMzksImV4cCI6MjA0ODY2ODEzOX0.tLnz1o3ximSJFMHb1kRzbfmF-4gIP_i-YD6n5TH24fE';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
         // Debug
         console.log('Script carregado');
         alert('Script carregado');
         
-        // Inicializar Supabase
-        const supabase = supabase.createClient(
-            'https://qkimxruewcensbnfllvv.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFraW14cnVld2NlbnNibmZsbHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwOTIxMzksImV4cCI6MjA0ODY2ODEzOX0.tLnz1o3ximSJFMHb1kRzbfmF-4gIP_i-YD6n5TH24fE'
-        );
-        
         // Função de login
-        function login() {
+        async function login() {
             alert('Botão clicado');
             console.log('Botão clicado');
             
@@ -31,29 +30,30 @@
             alert('Email: ' + email);
             console.log('Email:', email);
             
-            // Tentar login
-            supabase.auth.signInWithPassword({
-                email: email,
-                password: senha
-            })
-            .then(response => {
-                alert('Resposta do Supabase: ' + JSON.stringify(response));
-                console.log('Resposta:', response);
-                
-                if (response.error) {
-                    alert('Erro: ' + response.error.message);
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: senha
+                });
+
+                if (error) {
+                    alert('Erro: ' + error.message);
+                    console.error('Erro no login:', error.message);
                     return;
                 }
+
+                alert('Resposta do Supabase: ' + JSON.stringify(data));
+                console.log('Resposta:', data);
                 
                 // Salvar e redirecionar
-                localStorage.setItem('user', JSON.stringify(response.data.user));
+                localStorage.setItem('user', JSON.stringify(data.user));
                 sessionStorage.setItem('isAuthenticated', 'true');
                 window.location.href = 'index.html';
-            })
-            .catch(error => {
+                
+            } catch (error) {
                 alert('Erro: ' + error.message);
-                console.error('Erro:', error);
-            });
+                console.error('Erro inesperado:', error);
+            }
         }
         
         // Quando a página carregar
