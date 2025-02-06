@@ -6,7 +6,50 @@ const SUPABASE_URL = 'https://qkimxruewcensbnfllvv.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFraW14cnVld2NlbnNibmZsbHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwOTIxMzksImV4cCI6MjA0ODY2ODEzOX0.tLnz1o3ximSJFMHb1kRzbfmF-4gIP_i-YD6n5TH24fE';
 
 console.log('Inicializando Supabase...');
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Função para redirecionar com diferentes métodos
+async function redirectTo(path) {
+    console.log('Tentando redirecionar para:', path);
+    
+    // Método 1: location.href
+    try {
+        window.location.href = path;
+        return;
+    } catch (e) {
+        console.error('Erro no método 1:', e);
+    }
+    
+    // Método 2: location.replace
+    try {
+        window.location.replace(path);
+        return;
+    } catch (e) {
+        console.error('Erro no método 2:', e);
+    }
+    
+    // Método 3: assign
+    try {
+        window.location.assign(path);
+        return;
+    } catch (e) {
+        console.error('Erro no método 3:', e);
+    }
+    
+    // Método 4: window.open
+    try {
+        window.open(path, '_self');
+        return;
+    } catch (e) {
+        console.error('Erro no método 4:', e);
+    }
+    
+    // Se nenhum método funcionar, mostrar erro
+    alert('Erro ao redirecionar. Por favor, clique OK e aguarde.');
+    setTimeout(() => {
+        window.location = path;
+    }, 1000);
+}
 
 // Função para lidar com o login
 async function handleLogin(event) {
@@ -23,7 +66,7 @@ async function handleLogin(event) {
         submitButton.innerHTML = 'Entrando...';
         
         console.log('Tentando login com:', email);
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await window.supabaseClient.auth.signInWithPassword({
             email,
             password
         });
@@ -36,9 +79,13 @@ async function handleLogin(event) {
         
         console.log('Login bem sucedido:', data);
         
-        // Se o login for bem-sucedido
+        // Salvar dados do usuário
         localStorage.setItem('user', JSON.stringify(data.user));
-        window.location.href = 'index.html';
+        sessionStorage.setItem('isAuthenticated', 'true');
+        
+        // Tentar redirecionar
+        console.log('Tentando redirecionar após login...');
+        await redirectTo('index.html');
         
     } catch (error) {
         console.error('Erro no login:', error);
@@ -55,7 +102,7 @@ async function handleLogin(event) {
 async function checkAuth() {
     console.log('Verificando autenticação...');
     try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session }, error } = await window.supabaseClient.auth.getSession();
         
         if (error) {
             console.error('Erro ao verificar sessão:', error);
@@ -64,15 +111,29 @@ async function checkAuth() {
         
         console.log('Sessão atual:', session);
         
-        // Se não estiver na página de login e não estiver autenticado
-        if (!session && !window.location.pathname.includes('login.html')) {
+        const isLoginPage = window.location.pathname.includes('login.html');
+        const isIndexPage = window.location.pathname.includes('index.html');
+        
+        console.log('Página atual:', {
+            isLoginPage,
+            isIndexPage,
+            pathname: window.location.pathname
+        });
+        
+        if (!session && !isLoginPage) {
             console.log('Usuário não autenticado, redirecionando para login...');
-            window.location.href = 'login.html';
-        }
-        // Se estiver na página de login e já estiver autenticado
-        else if (session && window.location.pathname.includes('login.html')) {
+            await redirectTo('login.html');
+        } else if (session && isLoginPage) {
             console.log('Usuário já autenticado, redirecionando para index...');
-            window.location.href = 'index.html';
+            await redirectTo('index.html');
+        }
+        
+        // Atualizar email do usuário se estiver na página principal
+        if (session && !isLoginPage) {
+            const userEmail = document.getElementById('userEmail');
+            if (userEmail) {
+                userEmail.textContent = session.user.email;
+            }
         }
         
     } catch (error) {
@@ -84,11 +145,14 @@ async function checkAuth() {
 async function handleLogout() {
     try {
         console.log('Iniciando logout...');
-        const { error } = await supabase.auth.signOut();
+        const { error } = await window.supabaseClient.auth.signOut();
         if (error) throw error;
         
         localStorage.removeItem('user');
-        window.location.href = 'login.html';
+        sessionStorage.removeItem('isAuthenticated');
+        
+        console.log('Logout bem sucedido, redirecionando...');
+        await redirectTo('login.html');
     } catch (error) {
         console.error('Erro ao fazer logout:', error);
         alert('Erro ao fazer logout: ' + error.message);
