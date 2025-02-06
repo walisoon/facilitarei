@@ -1,8 +1,0 @@
-{
-  "build": {
-    "base": "",
-    "publish": ".",
-    "command": "echo 'No build needed - static site'"
-  },
-  "plugins": []
-}
