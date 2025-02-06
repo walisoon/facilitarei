@@ -3,197 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestão de Crédito</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
+    <title>Facilita Crédito - Sistema</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
-        .navbar-brand {
-            font-weight: bold;
+        .sidebar {
+            min-height: 100vh;
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
         }
         .nav-link {
             color: #333;
-            transition: color 0.3s ease;
+            padding: 0.8rem 1rem;
         }
         .nav-link:hover {
-            color: #007bff;
+            background: #e9ecef;
         }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+        .nav-link.active {
+            background: #0d6efd;
+            color: white;
+        }
+        .nav-link i {
+            margin-right: 10px;
         }
     </style>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
-            <div class="container">
-                <a class="navbar-brand" href="#">SGC</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Início</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Clientes</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Créditos</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Relatórios</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Configurações</a>
-                        </li>
-                    </ul>
-                    <div class="user-info">
-                        <span id="userEmail" class="text-muted"></span>
-                        <button class="btn btn-outline-danger" id="logoutButton">Sair</button>
-                    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 px-0 sidebar">
+                <div class="d-flex flex-column">
+                    <h4 class="p-3 mb-0">Facilita Crédito</h4>
+                    <hr class="my-2">
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#"><i class="bi bi-house"></i>Início</a>
+                        <a class="nav-link" href="#"><i class="bi bi-people"></i>Clientes</a>
+                        <a class="nav-link" href="#"><i class="bi bi-cash-stack"></i>Créditos</a>
+                        <a class="nav-link" href="#"><i class="bi bi-file-earmark-text"></i>Contratos</a>
+                        <a class="nav-link" href="#"><i class="bi bi-graph-up"></i>Relatórios</a>
+                        <a class="nav-link" href="#"><i class="bi bi-gear"></i>Configurações</a>
+                    </nav>
                 </div>
             </div>
-        </nav>
-    </header>
 
-    <main class="container mt-4">
-        <!-- Conteúdo principal será adicionado aqui -->
-        
-        <!-- Modal Novo Crédito -->
-        <div class="modal fade" id="novoCreditoModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Nova Ficha</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 px-4 py-3">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Dashboard</h2>
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i>
+                            <span id="user-email">Carregando...</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Perfil</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout()"><i class="bi bi-box-arrow-right me-2"></i>Sair</a></li>
+                        </ul>
                     </div>
-                    <div class="modal-body">
-                        <form id="creditForm">
-                            <div class="mb-3">
-                                <label class="form-label">Dados Pessoais</label>
-                                <div class="row g-3">
-                                    <div class="col-12">
-                                        <input type="text" class="form-control" id="nome" placeholder="Nome" required>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <input type="text" class="form-control" id="cpf" placeholder="CPF" required>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <input type="text" class="form-control" id="rg" placeholder="RG">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <input type="date" class="form-control" id="dataNascimento" placeholder="Data de Nascimento">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <input type="text" class="form-control" id="estadoCivil" placeholder="Estado Civil">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <input type="text" class="form-control" id="naturalidade" placeholder="Naturalidade">
-                                    </div>
-                                </div>
-                            </div>
+                </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Contato</label>
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <input type="tel" class="form-control" id="telefone1" placeholder="Telefone 01">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <input type="tel" class="form-control" id="telefone2" placeholder="Telefone 02">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <input type="email" class="form-control" id="email" placeholder="E-mail">
-                                    </div>
-                                </div>
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Total de Clientes</h6>
+                                <h3 class="card-title">0</h3>
                             </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Profissão e Renda</label>
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <input type="text" class="form-control" id="profissao" placeholder="Profissão">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <input type="text" class="form-control" id="empresa" placeholder="Empresa">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <input type="number" class="form-control" id="rendaIndividual" placeholder="Renda Individual">
-                                    </div>
-                                </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Créditos Ativos</h6>
+                                <h3 class="card-title">0</h3>
                             </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Dados do Crédito</label>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <input type="number" class="form-control" id="valor" placeholder="Valor do Crédito" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <input type="number" class="form-control" id="numeroParcelas" value="240" readonly>
-                                    </div>
-                                </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Valor Total</h6>
+                                <h3 class="card-title">R$ 0,00</h3>
                             </div>
-
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="submit" class="btn btn-primary">Salvar Ficha</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Contratos Pendentes</h6>
+                                <h3 class="card-title">0</h3>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 
-    <!-- Supabase -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Supabase Config -->
-    <script src="js/supabase.js"></script>
-    <!-- Auth JS -->
-    <script src="js/auth.js"></script>
-    
-    <!-- Debug Script -->
-    <script>
-        // Verificar autenticação ao carregar a página
-        window.addEventListener('load', async () => {
-            console.log('Página index carregada, verificando autenticação...');
-            
-            // Verificar se está autenticado
-            const isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
-            console.log('Estado de autenticação:', isAuthenticated);
-            
-            if (!isAuthenticated) {
-                console.log('Usuário não autenticado, redirecionando para login...');
-                try {
-                    window.location.replace('./login.html');
-                } catch (e) {
-                    console.error('Erro no redirecionamento:', e);
-                    alert('Erro no redirecionamento. Por favor, tente novamente.');
-                }
-                return;
-            }
-            
-            // Mostrar email do usuário
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm'
+        
+        const supabase = createClient(
+            'https://qkimxruewcensbnfllvv.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFraW14cnVld2NlbnNibmZsbHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwOTIxMzksImV4cCI6MjA0ODY2ODEzOX0.tLnz1o3ximSJFMHb1kRzbfmF-4gIP_i-YD6n5TH24fE'
+        );
+
+        // Verificar autenticação
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !sessionStorage.getItem('isAuthenticated')) {
+            window.location.href = 'login.html';
+        } else {
+            document.getElementById('user-email').textContent = user.email;
+        }
+
+        // Função de logout
+        window.logout = async function() {
             try {
-                const userJson = localStorage.getItem('user');
-                if (userJson) {
-                    const user = JSON.parse(userJson);
-                    const userEmail = document.getElementById('userEmail');
-                    if (userEmail) {
-                        userEmail.textContent = user.email;
-                    }
-                }
+                await supabase.auth.signOut();
+                localStorage.removeItem('user');
+                sessionStorage.removeItem('isAuthenticated');
+                window.location.href = 'login.html';
             } catch (error) {
-                console.error('Erro ao mostrar email do usuário:', error);
+                console.error('Erro ao fazer logout:', error);
             }
-        });
+        }
     </script>
 </body>
 </html>
