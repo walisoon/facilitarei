@@ -8,6 +8,11 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 console.log('Inicializando Supabase...');
 const supabase = window.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// URLs de redirecionamento
+const BASE_URL = 'https://euphonious-selkie-17c6d9.netlify.app';
+const LOGIN_URL = `${BASE_URL}/login.html`;
+const INDEX_URL = `${BASE_URL}/index.html`;
+
 // Função para redirecionar com diferentes métodos
 async function redirectTo(path) {
     console.log('Tentando redirecionar para:', path);
@@ -85,7 +90,7 @@ async function handleLogin(event) {
         
         // Tentar redirecionar
         console.log('Tentando redirecionar após login...');
-        await redirectTo('index.html');
+        await redirectTo(INDEX_URL);
         
     } catch (error) {
         console.error('Erro no login:', error);
@@ -111,25 +116,19 @@ async function checkAuth() {
         
         console.log('Sessão atual:', session);
         
-        const isLoginPage = window.location.pathname.includes('login.html');
-        const isIndexPage = window.location.pathname.includes('index.html');
+        const currentPath = window.location.pathname;
+        console.log('Caminho atual:', currentPath);
         
-        console.log('Página atual:', {
-            isLoginPage,
-            isIndexPage,
-            pathname: window.location.pathname
-        });
-        
-        if (!session && !isLoginPage) {
+        if (!session && !currentPath.includes('login.html')) {
             console.log('Usuário não autenticado, redirecionando para login...');
-            await redirectTo('login.html');
-        } else if (session && isLoginPage) {
+            await redirectTo(LOGIN_URL);
+        } else if (session && currentPath.includes('login.html')) {
             console.log('Usuário já autenticado, redirecionando para index...');
-            await redirectTo('index.html');
+            await redirectTo(INDEX_URL);
         }
         
         // Atualizar email do usuário se estiver na página principal
-        if (session && !isLoginPage) {
+        if (session && !currentPath.includes('login.html')) {
             const userEmail = document.getElementById('userEmail');
             if (userEmail) {
                 userEmail.textContent = session.user.email;
@@ -152,7 +151,7 @@ async function handleLogout() {
         sessionStorage.removeItem('isAuthenticated');
         
         console.log('Logout bem sucedido, redirecionando...');
-        await redirectTo('login.html');
+        await redirectTo(LOGIN_URL);
     } catch (error) {
         console.error('Erro ao fazer logout:', error);
         alert('Erro ao fazer logout: ' + error.message);
