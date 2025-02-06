@@ -17,7 +17,10 @@
     "lucide-react": "^0.320.0",
     "react-hot-toast": "^2.4.1",
     "jspdf": "^2.5.1",
-    "react-datepicker": "^5.0.0"
+    "react-datepicker": "^5.0.0",
+    "@radix-ui/react-separator": "^1.0.3",
+    "@radix-ui/react-tabs": "^1.0.4",
+    "@react-pdf/renderer": "^3.3.4"
   },
   "devDependencies": {
     "@types/node": "^20",
