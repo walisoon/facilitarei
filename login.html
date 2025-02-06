@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Facilita Crédito</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body {
-            background-color: #f8f9fa;
-        }
+        body { background-color: #f8f9fa; }
         .login-container {
             max-width: 400px;
             margin: 100px auto;
@@ -17,13 +15,6 @@
             background-color: white;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .logo {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo img {
-            max-width: 200px;
         }
         .error-message {
             display: none;
@@ -36,9 +27,7 @@
 <body>
     <div class="container">
         <div class="login-container">
-            <div class="logo">
-                <img src="img/logo.png" alt="Facilita Crédito">
-            </div>
+            <h1 class="text-center mb-4">Facilita Crédito</h1>
             <div class="mb-3">
                 <label for="email" class="form-label">Email</label>
                 <input type="email" class="form-control" id="email" required>
@@ -58,41 +47,37 @@
     </div>
 
     <script>
-        // Inicializar Supabase
-        const SUPABASE_URL = 'https://qkimxruewcensbnfllvv.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFraW14cnVld2NlbnNibmZsbHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDY4NDQ1MDAsImV4cCI6MjAyMjQyMDUwMH0.JQh0UG6Iy5uS5kqHGsXs_Uj5WKyHYF0WzNXKYoYYm7c';
-        const { createClient } = supabase;
-        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabase = supabase.createClient(
+            'https://qkimxruewcensbnfllvv.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFraW14cnVld2NlbnNibmZsbHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDY4NDQ1MDAsImV4cCI6MjAyMjQyMDUwMH0.JQh0UG6Iy5uS5kqHGsXs_Uj5WKyHYF0WzNXKYoYYm7c'
+        );
 
-        // Função de login
         async function login() {
-            console.log("Botão clicado");
-            
+            const errorDiv = document.getElementById('error-message');
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             
-            console.log("Email:", email);
-            
             try {
-                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                const { data, error } = await supabase.auth.signInWithPassword({
                     email: email,
                     password: password
                 });
 
                 if (error) {
                     console.error('Erro no login:', error.message);
-                    document.getElementById('error-message').textContent = 'Erro no login: ' + error.message;
-                    document.getElementById('error-message').style.display = 'block';
+                    errorDiv.textContent = 'Erro no login: ' + error.message;
+                    errorDiv.style.display = 'block';
                     return;
                 }
 
-                console.log('Login bem sucedido:', data);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                sessionStorage.setItem('isAuthenticated', 'true');
                 window.location.href = 'index.html';
                 
             } catch (error) {
                 console.error('Erro inesperado:', error);
-                document.getElementById('error-message').textContent = 'Erro inesperado: ' + error.message;
-                document.getElementById('error-message').style.display = 'block';
+                errorDiv.textContent = 'Erro inesperado: ' + error.message;
+                errorDiv.style.display = 'block';
             }
         }
     </script>
