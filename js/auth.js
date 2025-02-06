@@ -8,25 +8,41 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 console.log('Inicializando Supabase...');
 const supabase = window.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Função para forçar navegação
-function forceNavigate(path) {
-    const baseUrl = window.location.origin;
-    const fullUrl = `${baseUrl}${path}`;
-    console.log('Forçando navegação para:', fullUrl);
+// Função para navegar
+function navigateTo(path) {
+    // Adicionar um hash aleatório para forçar reload
+    const randomHash = Math.random().toString(36).substring(7);
+    const fullPath = path + '#' + randomHash;
     
-    // Limpar qualquer estado anterior
-    sessionStorage.clear();
+    console.log('Navegando para:', fullPath);
     
-    // Forçar navegação
-    window.location.replace(fullUrl);
+    // Definir cookie de redirecionamento
+    document.cookie = `redirect_after_reload=${path};path=/`;
     
-    // Se replace não funcionar, tentar href
-    setTimeout(() => {
-        if (window.location.href !== fullUrl) {
-            console.log('Replace falhou, tentando href...');
-            window.location.href = fullUrl;
+    // Tentar location.replace primeiro
+    try {
+        window.location.replace(fullPath);
+    } catch (e) {
+        console.error('Replace falhou:', e);
+        // Se falhar, tentar reload
+        window.location.reload();
+    }
+}
+
+// Função para verificar redirecionamento após reload
+function checkRedirectAfterReload() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'redirect_after_reload') {
+            // Limpar o cookie
+            document.cookie = 'redirect_after_reload=;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT';
+            // Fazer o redirecionamento
+            window.location.href = value;
+            return true;
         }
-    }, 100);
+    }
+    return false;
 }
 
 // Função para lidar com o login
@@ -61,8 +77,8 @@ async function handleLogin(event) {
         localStorage.setItem('user', JSON.stringify(data.user));
         sessionStorage.setItem('isAuthenticated', 'true');
         
-        // Forçar navegação para a página principal
-        forceNavigate('/index.html');
+        // Navegar para a página principal
+        navigateTo('/index.html');
         
     } catch (error) {
         console.error('Erro no login:', error);
@@ -78,6 +94,12 @@ async function handleLogin(event) {
 // Verificar estado de autenticação
 async function checkAuth() {
     console.log('Verificando autenticação...');
+    
+    // Primeiro verificar se há redirecionamento pendente
+    if (checkRedirectAfterReload()) {
+        return;
+    }
+    
     try {
         const { data: { session }, error } = await window.supabaseClient.auth.getSession();
         
@@ -93,10 +115,10 @@ async function checkAuth() {
         
         if (!session && !currentPath.includes('login.html')) {
             console.log('Usuário não autenticado, redirecionando para login...');
-            forceNavigate('/login.html');
+            navigateTo('/login.html');
         } else if (session && currentPath.includes('login.html')) {
             console.log('Usuário já autenticado, redirecionando para index...');
-            forceNavigate('/index.html');
+            navigateTo('/index.html');
         }
         
         // Atualizar email do usuário se estiver na página principal
@@ -124,7 +146,7 @@ async function handleLogout() {
         sessionStorage.clear();
         
         console.log('Logout bem sucedido, redirecionando...');
-        forceNavigate('/login.html');
+        navigateTo('/login.html');
     } catch (error) {
         console.error('Erro ao fazer logout:', error);
         alert('Erro ao fazer logout: ' + error.message);
@@ -135,7 +157,7 @@ async function handleLogout() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Página carregada, inicializando...');
     console.log('URL atual:', window.location.href);
-    console.log('Origin:', window.location.origin);
+    console.log('Hash:', window.location.hash);
     console.log('Pathname:', window.location.pathname);
     
     // Verificar autenticação
