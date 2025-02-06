@@ -1,6 +1,6 @@
-# Facilita
+# Facilita Crédito
 
-Sistema de gestão de crédito imobiliário.
+Sistema de login e gerenciamento de clientes.
 
 ## Tecnologias
 
@@ -11,9 +11,16 @@ Sistema de gestão de crédito imobiliário.
 
 ## Deploy
 
-O sistema está hospedado no Netlify e usa o Supabase como backend.
+O site está disponível em:
+- GitHub Pages: https://walisoon.github.io/facilitarei
+- Netlify: https://euphonious-selkie-17c6d9.netlify.app
 
-Last deploy: 2025-02-04T01:40:00-04:00
+## Desenvolvimento
+
+Este é um site estático que usa:
+- HTML
+- JavaScript
+- Supabase para autenticação
 
 ## Última atualização
 
