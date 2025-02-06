@@ -30,24 +30,19 @@ async function handleLogin(event) {
         
         if (error) {
             console.error('Erro no login:', error);
-            if (error.message.includes('Invalid login credentials')) {
-                alert('Email ou senha incorretos. Por favor, tente novamente.');
-            } else {
-                alert('Erro no login: ' + error.message);
-            }
+            alert('Email ou senha incorretos. Por favor, tente novamente.');
             return;
         }
         
-        // Se o login for bem-sucedido
-        console.log('Login bem-sucedido:', data);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        console.log('Login bem sucedido:', data);
         
-        // Redirecionar para a página principal
+        // Se o login for bem-sucedido
+        localStorage.setItem('user', JSON.stringify(data.user));
         window.location.href = 'index.html';
         
     } catch (error) {
         console.error('Erro no login:', error);
-        alert('Erro no login: ' + (error.message || 'Tente novamente mais tarde'));
+        alert('Erro no login: ' + error.message);
     } finally {
         // Restaurar botão
         const submitButton = document.querySelector('button[type="submit"]');
@@ -64,7 +59,7 @@ async function checkAuth() {
         
         if (error) {
             console.error('Erro ao verificar sessão:', error);
-            throw error;
+            return;
         }
         
         console.log('Sessão atual:', session);
@@ -76,7 +71,7 @@ async function checkAuth() {
         }
         // Se estiver na página de login e já estiver autenticado
         else if (session && window.location.pathname.includes('login.html')) {
-            console.log('Usuário já autenticado, redirecionando para home...');
+            console.log('Usuário já autenticado, redirecionando para index...');
             window.location.href = 'index.html';
         }
         
