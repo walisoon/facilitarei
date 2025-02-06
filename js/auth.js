@@ -8,52 +8,25 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 console.log('Inicializando Supabase...');
 const supabase = window.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// URLs de redirecionamento
-const BASE_URL = 'https://euphonious-selkie-17c6d9.netlify.app';
-const LOGIN_URL = `${BASE_URL}/login.html`;
-const INDEX_URL = `${BASE_URL}/index.html`;
-
-// Função para redirecionar com diferentes métodos
-async function redirectTo(path) {
-    console.log('Tentando redirecionar para:', path);
+// Função para forçar navegação
+function forceNavigate(path) {
+    const baseUrl = window.location.origin;
+    const fullUrl = `${baseUrl}${path}`;
+    console.log('Forçando navegação para:', fullUrl);
     
-    // Método 1: location.href
-    try {
-        window.location.href = path;
-        return;
-    } catch (e) {
-        console.error('Erro no método 1:', e);
-    }
+    // Limpar qualquer estado anterior
+    sessionStorage.clear();
     
-    // Método 2: location.replace
-    try {
-        window.location.replace(path);
-        return;
-    } catch (e) {
-        console.error('Erro no método 2:', e);
-    }
+    // Forçar navegação
+    window.location.replace(fullUrl);
     
-    // Método 3: assign
-    try {
-        window.location.assign(path);
-        return;
-    } catch (e) {
-        console.error('Erro no método 3:', e);
-    }
-    
-    // Método 4: window.open
-    try {
-        window.open(path, '_self');
-        return;
-    } catch (e) {
-        console.error('Erro no método 4:', e);
-    }
-    
-    // Se nenhum método funcionar, mostrar erro
-    alert('Erro ao redirecionar. Por favor, clique OK e aguarde.');
+    // Se replace não funcionar, tentar href
     setTimeout(() => {
-        window.location = path;
-    }, 1000);
+        if (window.location.href !== fullUrl) {
+            console.log('Replace falhou, tentando href...');
+            window.location.href = fullUrl;
+        }
+    }, 100);
 }
 
 // Função para lidar com o login
@@ -88,9 +61,8 @@ async function handleLogin(event) {
         localStorage.setItem('user', JSON.stringify(data.user));
         sessionStorage.setItem('isAuthenticated', 'true');
         
-        // Tentar redirecionar
-        console.log('Tentando redirecionar após login...');
-        await redirectTo(INDEX_URL);
+        // Forçar navegação para a página principal
+        forceNavigate('/index.html');
         
     } catch (error) {
         console.error('Erro no login:', error);
@@ -121,10 +93,10 @@ async function checkAuth() {
         
         if (!session && !currentPath.includes('login.html')) {
             console.log('Usuário não autenticado, redirecionando para login...');
-            await redirectTo(LOGIN_URL);
+            forceNavigate('/login.html');
         } else if (session && currentPath.includes('login.html')) {
             console.log('Usuário já autenticado, redirecionando para index...');
-            await redirectTo(INDEX_URL);
+            forceNavigate('/index.html');
         }
         
         // Atualizar email do usuário se estiver na página principal
@@ -147,11 +119,12 @@ async function handleLogout() {
         const { error } = await window.supabaseClient.auth.signOut();
         if (error) throw error;
         
-        localStorage.removeItem('user');
-        sessionStorage.removeItem('isAuthenticated');
+        // Limpar dados
+        localStorage.clear();
+        sessionStorage.clear();
         
         console.log('Logout bem sucedido, redirecionando...');
-        await redirectTo(LOGIN_URL);
+        forceNavigate('/login.html');
     } catch (error) {
         console.error('Erro ao fazer logout:', error);
         alert('Erro ao fazer logout: ' + error.message);
@@ -161,6 +134,9 @@ async function handleLogout() {
 // Adicionar event listeners quando o documento carregar
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Página carregada, inicializando...');
+    console.log('URL atual:', window.location.href);
+    console.log('Origin:', window.location.origin);
+    console.log('Pathname:', window.location.pathname);
     
     // Verificar autenticação
     checkAuth();
